@@ -124,7 +124,7 @@ export function AdvancedBlockLibrary({
   }, []);
 
   // Handle type filter
-  const handleTypeFilter = useCallback((type: 'preset' | 'one-off' | undefined) => {
+  const handleTypeFilter = useCallback((type: 'preset' | undefined) => {
     setSearchFilters(prev => ({ ...prev, type }));
   }, []);
 
@@ -264,16 +264,6 @@ export function AdvancedBlockLibrary({
               }`}
             >
               Preset
-            </button>
-            <button
-              onClick={() => handleTypeFilter('one-off')}
-              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                searchFilters.type === 'one-off'
-                  ? 'bg-blue-600 text-white border-blue-500'
-                  : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
-              }`}
-            >
-              One-off
             </button>
           </div>
 

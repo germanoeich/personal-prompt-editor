@@ -38,9 +38,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!['preset', 'one-off'].includes(data.type)) {
+    if (data.type !== 'preset') {
       return NextResponse.json(
-        { error: 'Type must be either "preset" or "one-off"' },
+        { error: 'Type must be "preset"' },
         { status: 400 }
       );
     }

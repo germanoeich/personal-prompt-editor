@@ -2,7 +2,7 @@ export interface Block {
   id: number;
   title: string;
   content: string;
-  type: 'preset' | 'one-off';
+  type: 'preset';
   tags: string[] | null;
   categories: string[] | null;
   created_at: string;
@@ -59,7 +59,7 @@ export interface RatingCategory {
 export interface CreateBlockData {
   title: string;
   content: string;
-  type: 'preset' | 'one-off';
+  type: 'preset';
   tags?: string[];
   categories?: string[];
 }

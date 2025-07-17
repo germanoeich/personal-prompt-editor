@@ -3,7 +3,7 @@ export interface Block {
   id: number;
   title: string;
   content: string;
-  type: 'preset' | 'one-off';
+  type: 'preset';
   tags: string[];
   categories: string[];
   variables: string[];
@@ -92,7 +92,7 @@ export interface PromptTextElement extends PromptElement {
 export interface PromptBlockElement extends PromptElement {
   type: 'block';
   blockId: number;
-  blockType: 'preset' | 'one-off';
+  blockType: 'preset';
   originalBlock?: Block;
   isOverridden: boolean;
   overrideContent?: string;
@@ -114,7 +114,7 @@ export interface DropResult {
 export interface BlockFormData {
   title: string;
   content: string;
-  type: 'preset' | 'one-off';
+  type: 'preset';
   tags: string[];
   categories: string[];
 }
@@ -138,7 +138,7 @@ export interface SearchFilters {
   search: string;
   tags: string[];
   categories: string[];
-  type?: 'preset' | 'one-off';
+  type?: 'preset';
 }
 
 export interface SortOption {
@@ -185,7 +185,7 @@ export interface ApiResponse<T> {
 export interface CreateBlockRequest {
   title: string;
   content: string;
-  type: 'preset' | 'one-off';
+  type: 'preset';
   tags?: string[];
   categories?: string[];
 }
