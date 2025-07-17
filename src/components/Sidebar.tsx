@@ -69,7 +69,6 @@ export function Sidebar({
   }, []);
 
   const expandedPanels = panels.filter(panel => panel.isExpanded);
-  const collapsedPanels = panels.filter(panel => !panel.isExpanded);
 
   const sidebarWidth = isCollapsed ? 60 : 320;
 
@@ -114,67 +113,69 @@ export function Sidebar({
         </div>
       )}
 
-      {/* Expanded Panels */}
+      {/* Panels */}
       {!isCollapsed && (
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Collapsed Panel Headers */}
-          {collapsedPanels.map(panel => (
-            <button
-              key={panel.id}
-              onClick={() => togglePanel(panel.id)}
-              className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 border-b border-gray-700 transition-colors"
-            >
-              <panel.icon className="w-5 h-5 text-gray-400" />
-              <span className="font-medium">{panel.title}</span>
-              <ChevronRightIcon className="w-4 h-4 ml-auto" />
-            </button>
-          ))}
+          {panels.map(panel => {
+            if (panel.isExpanded) {
+              // Expanded panel
+              const totalExpandedHeight = expandedPanels.reduce((sum, p) => sum + (p.defaultHeight || 300), 0);
+              const availableHeight = totalExpandedHeight;
+              const panelHeight = `${((panel.defaultHeight || 300) / availableHeight) * 100}%`;
 
-          {/* Expanded Panels */}
-          {expandedPanels.map(panel => {
-            const totalExpandedHeight = expandedPanels.reduce((sum, p) => sum + (p.defaultHeight || 300), 0);
-            const availableHeight = totalExpandedHeight;
-            const panelHeight = `${((panel.defaultHeight || 300) / availableHeight) * 100}%`;
-
-            return (
-              <div
-                key={panel.id}
-                className="flex flex-col border-b border-gray-700"
-                style={{ 
-                  height: expandedPanels.length === 1 ? 'auto' : panelHeight,
-                  minHeight: '200px',
-                  flex: expandedPanels.length === 1 ? '1' : `0 0 ${panelHeight}`,
-                }}
-              >
-                {/* Panel Header */}
-                <button
-                  onClick={() => togglePanel(panel.id)}
-                  className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 border-b border-gray-700 transition-colors flex-shrink-0"
+              return (
+                <div
+                  key={panel.id}
+                  className="flex flex-col border-b border-gray-700"
+                  style={{ 
+                    height: expandedPanels.length === 1 ? 'auto' : panelHeight,
+                    minHeight: '200px',
+                    flex: expandedPanels.length === 1 ? '1' : `0 0 ${panelHeight}`,
+                  }}
                 >
-                  <panel.icon className="w-5 h-5 text-blue-400" />
-                  <span className="font-medium">{panel.title}</span>
-                  <ChevronLeftIcon className="w-4 h-4 ml-auto" />
-                </button>
+                  {/* Panel Header */}
+                  <button
+                    onClick={() => togglePanel(panel.id)}
+                    className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 border-b border-gray-700 transition-colors flex-shrink-0"
+                  >
+                    <panel.icon className="w-5 h-5 text-blue-400" />
+                    <span className="font-medium">{panel.title}</span>
+                    <ChevronLeftIcon className="w-4 h-4 ml-auto" />
+                  </button>
 
-                {/* Panel Content */}
-                <div className="flex-1 min-h-0 overflow-hidden">
-                  {panel.id === 'variables' && (
-                    <SidebarVariablesPanel
-                      variables={variables}
-                      allVariables={allVariables}
-                      onVariableChange={onVariableChange}
-                    />
-                  )}
-                  {panel.id === 'prompts' && (
-                    <SidebarPromptsPanel
-                      prompts={prompts}
-                      onPromptSelect={onPromptSelect}
-                      onPromptDelete={onPromptDelete}
-                    />
-                  )}
+                  {/* Panel Content */}
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    {panel.id === 'variables' && (
+                      <SidebarVariablesPanel
+                        variables={variables}
+                        allVariables={allVariables}
+                        onVariableChange={onVariableChange}
+                      />
+                    )}
+                    {panel.id === 'prompts' && (
+                      <SidebarPromptsPanel
+                        prompts={prompts}
+                        onPromptSelect={onPromptSelect}
+                        onPromptDelete={onPromptDelete}
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
+              );
+            } else {
+              // Collapsed panel header
+              return (
+                <button
+                  key={panel.id}
+                  onClick={() => togglePanel(panel.id)}
+                  className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 border-b border-gray-700 transition-colors"
+                >
+                  <panel.icon className="w-5 h-5 text-gray-400" />
+                  <span className="font-medium">{panel.title}</span>
+                  <ChevronRightIcon className="w-4 h-4 ml-auto" />
+                </button>
+              );
+            }
           })}
         </div>
       )}
