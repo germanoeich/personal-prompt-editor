@@ -315,7 +315,6 @@ export function TextEditorCanvas({
             {/* Top drop zone */}
             <DropZone 
               id="drop-zone-top" 
-              isVisible={isDragging}
               label="Drop block at the beginning"
             />
             
@@ -363,24 +362,25 @@ export function TextEditorCanvas({
                   />
                 )}
 
-                {/* Drop zone after each element */}
+                {/* Add Button */}
+                {!isDragging && (
+                  <div className="flex items-center justify-center py-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => addTextElement(element.id)}
+                      className="flex items-center gap-1 px-3 py-1 text-xs bg-gray-700 text-gray-300 rounded-full hover:bg-gray-600 transition-colors"
+                    >
+                      <PlusIcon className="w-3 h-3" />
+                      Add Text
+                    </button>
+                  </div>
+                )}
+
+                {/* Drop zone after each element - positioned between blocks */}
                 <DropZone 
                   id={`drop-zone-after-${element.id}`} 
                   afterElementId={element.id}
-                  isVisible={isDragging}
                   label={`Drop block after ${element.type === 'text' ? 'text' : element.originalBlock?.title || 'block'}`}
                 />
-
-                {/* Add Button */}
-                <div className="flex items-center justify-center py-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => addTextElement(element.id)}
-                    className="flex items-center gap-1 px-3 py-1 text-xs bg-gray-700 text-gray-300 rounded-full hover:bg-gray-600 transition-colors"
-                  >
-                    <PlusIcon className="w-3 h-3" />
-                    Add Text
-                  </button>
-                </div>
               </div>
             ))}
 
