@@ -19,6 +19,7 @@ import {
 import { extractVariables, replaceVariables } from '@/lib/variables';
 import { TextEditorBlock } from './TextEditorBlock';
 import { TextEditorText } from './TextEditorText';
+import { DropZone } from './DropZone';
 
 interface TextEditorCanvasProps {
   promptContent: PromptContent;
@@ -57,12 +58,29 @@ export function TextEditorCanvas({
 
   // Add new text element
   const addTextElement = useCallback((afterElementId?: string) => {
+    const sortedContent = [...promptContent].sort((a, b) => a.order - b.order);
+    let newOrder: number;
+    
+    if (afterElementId) {
+      const afterIndex = sortedContent.findIndex(el => el.id === afterElementId);
+      if (afterIndex !== -1 && afterIndex < sortedContent.length - 1) {
+        // Insert between two elements
+        const currentOrder = sortedContent[afterIndex].order;
+        const nextOrder = sortedContent[afterIndex + 1].order;
+        newOrder = (currentOrder + nextOrder) / 2;
+      } else {
+        // Insert after the last element or element not found
+        newOrder = getNextOrder();
+      }
+    } else {
+      // Add to end
+      newOrder = getNextOrder();
+    }
+
     const newElement: PromptTextElement = {
       id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: 'text',
-      order: afterElementId 
-        ? promptContent.find(el => el.id === afterElementId)?.order || 0 + 0.5
-        : getNextOrder(),
+      order: newOrder,
       content: '',
     };
 
@@ -73,12 +91,29 @@ export function TextEditorCanvas({
 
   // Add block element
   const addBlockElement = useCallback((block: Block, afterElementId?: string) => {
+    const sortedContent = [...promptContent].sort((a, b) => a.order - b.order);
+    let newOrder: number;
+    
+    if (afterElementId) {
+      const afterIndex = sortedContent.findIndex(el => el.id === afterElementId);
+      if (afterIndex !== -1 && afterIndex < sortedContent.length - 1) {
+        // Insert between two elements
+        const currentOrder = sortedContent[afterIndex].order;
+        const nextOrder = sortedContent[afterIndex + 1].order;
+        newOrder = (currentOrder + nextOrder) / 2;
+      } else {
+        // Insert after the last element or element not found
+        newOrder = getNextOrder();
+      }
+    } else {
+      // Add to end
+      newOrder = getNextOrder();
+    }
+
     const newElement: PromptBlockElement = {
       id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: 'block',
-      order: afterElementId 
-        ? promptContent.find(el => el.id === afterElementId)?.order || 0 + 0.5
-        : getNextOrder(),
+      order: newOrder,
       blockId: block.id,
       blockType: block.type,
       originalBlock: block,
@@ -192,6 +227,7 @@ export function TextEditorCanvas({
     addBlockElement(block, afterElementId);
   }, [addBlockElement]);
 
+
   const sortedContent = useMemo(() => 
     [...promptContent].sort((a, b) => a.order - b.order),
     [promptContent]
@@ -267,9 +303,16 @@ export function TextEditorCanvas({
             )}
           </div>
         ) : (
-          <div className={`max-w-4xl mx-auto space-y-4 ${
+          <div className={`max-w-4xl mx-auto space-y-2 ${
             isOver ? 'ring-2 ring-blue-500/50 rounded-lg p-4' : ''
           }`}>
+            {/* Top drop zone */}
+            <DropZone 
+              id="drop-zone-top" 
+              isVisible={false}
+              label="Drop block at the beginning"
+            />
+            
             {sortedContent.map((element, index) => (
               <div key={element.id} className="group relative">
                 {element.type === 'text' ? (
@@ -313,6 +356,14 @@ export function TextEditorCanvas({
                     onMoveDown={index < sortedContent.length - 1 ? () => moveElement(element.id, 'down') : undefined}
                   />
                 )}
+
+                {/* Drop zone after each element */}
+                <DropZone 
+                  id={`drop-zone-after-${element.id}`} 
+                  afterElementId={element.id}
+                  isVisible={false}
+                  label={`Drop block after ${element.type === 'text' ? 'text' : element.originalBlock?.title || 'block'}`}
+                />
 
                 {/* Add Button */}
                 <div className="flex items-center justify-center py-2 opacity-0 group-hover:opacity-100 transition-opacity">

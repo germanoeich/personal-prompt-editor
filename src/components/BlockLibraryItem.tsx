@@ -217,24 +217,24 @@ export function BlockLibraryItem({
 
         {/* Expanded Content */}
         {isExpanded && (
-          <div className="mt-3 ml-6 space-y-3 border-t pt-3">
+          <div className="mt-3 ml-6 space-y-3 border-t border-gray-600 pt-3">
             {isEditing ? (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-300 mb-1">
                     Content
                   </label>
                   <textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="w-full h-24 p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className="w-full h-24 p-2 text-xs border border-gray-600 bg-gray-700 text-white rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     placeholder="Enter block content with {{variable}} placeholders..."
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-300 mb-1">
                     Tags (comma-separated)
                   </label>
                   <input
@@ -242,7 +242,7 @@ export function BlockLibraryItem({
                     value={editTags}
                     onChange={(e) => setEditTags(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-2 text-xs border border-gray-600 bg-gray-700 text-white rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="tag1, tag2, tag3..."
                   />
                 </div>
@@ -251,10 +251,10 @@ export function BlockLibraryItem({
               <>
                 {/* Content Preview */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-300 mb-1">
                     Content
                   </label>
-                  <div className="text-xs text-gray-600 whitespace-pre-wrap bg-gray-50 p-2 rounded border max-h-32 overflow-y-auto">
+                  <div className="text-xs text-gray-200 whitespace-pre-wrap bg-gray-800 p-2 rounded border border-gray-600 max-h-32 overflow-y-auto">
                     {block.content}
                   </div>
                 </div>
@@ -262,14 +262,14 @@ export function BlockLibraryItem({
                 {/* Variables */}
                 {block.variables.length > 0 && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       Variables
                     </label>
                     <div className="flex flex-wrap gap-1">
                       {block.variables.map((variable, index) => (
                         <span
                           key={index}
-                          className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded border"
+                          className="px-2 py-0.5 text-xs bg-yellow-900/30 text-yellow-300 rounded border border-yellow-500/30"
                         >
                           {variable}
                         </span>
@@ -281,14 +281,14 @@ export function BlockLibraryItem({
                 {/* Tags */}
                 {block.tags.length > 0 && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       Tags
                     </label>
                     <div className="flex flex-wrap gap-1">
                       {block.tags.map((tag, index) => (
                         <span
                           key={index}
-                          className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded"
+                          className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded border border-gray-600"
                         >
                           {tag}
                         </span>
@@ -300,14 +300,14 @@ export function BlockLibraryItem({
                 {/* Categories */}
                 {block.categories.length > 0 && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
                       Categories
                     </label>
                     <div className="flex flex-wrap gap-1">
                       {block.categories.map((category, index) => (
                         <span
                           key={index}
-                          className="px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded"
+                          className="px-2 py-0.5 text-xs bg-blue-900/30 text-blue-300 rounded border border-blue-500/30"
                         >
                           {category}
                         </span>
@@ -317,7 +317,7 @@ export function BlockLibraryItem({
                 )}
 
                 {/* Metadata */}
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-400">
                   Created: {new Date(block.created_at).toLocaleDateString()}
                   {block.updated_at !== block.created_at && (
                     <> • Updated: {new Date(block.updated_at).toLocaleDateString()}</>

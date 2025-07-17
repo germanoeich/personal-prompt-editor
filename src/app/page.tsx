@@ -223,19 +223,61 @@ export default function Home() {
     if (over && active.data.current?.type === 'library-block') {
       const block = active.data.current.block;
       
-      // Add block to prompt content
-      const newElement = {
-        id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type: 'block' as const,
-        order: promptContent.length + 1,
-        blockId: block.id,
-        blockType: block.type,
-        originalBlock: block,
-        isOverridden: false,
-        overrideContent: undefined,
-      };
-      
-      setPromptContent(prev => [...prev, newElement].sort((a, b) => a.order - b.order));
+      // Handle different drop target types
+      if (over.id === 'text-editor-droppable') {
+        // Dropped on main text editor area - add to end
+        const newElement = {
+          id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: 'block' as const,
+          order: promptContent.length + 1,
+          blockId: block.id,
+          blockType: block.type,
+          originalBlock: block,
+          isOverridden: false,
+          overrideContent: undefined,
+        };
+        
+        setPromptContent(prev => [...prev, newElement].sort((a, b) => a.order - b.order));
+      } else if (over.data.current?.type === 'drop-zone') {
+        // Dropped on a specific drop zone
+        const { afterElementId } = over.data.current;
+        const sortedContent = [...promptContent].sort((a, b) => a.order - b.order);
+        
+        let newOrder: number;
+        
+        if (over.id === 'drop-zone-top') {
+          // Insert at the beginning
+          newOrder = sortedContent.length > 0 ? sortedContent[0].order - 1 : 1;
+        } else if (afterElementId) {
+          // Insert after specific element
+          const afterIndex = sortedContent.findIndex(el => el.id === afterElementId);
+          if (afterIndex !== -1 && afterIndex < sortedContent.length - 1) {
+            // Insert between two elements
+            const currentOrder = sortedContent[afterIndex].order;
+            const nextOrder = sortedContent[afterIndex + 1].order;
+            newOrder = (currentOrder + nextOrder) / 2;
+          } else {
+            // Insert after the last element or element not found
+            newOrder = (sortedContent[sortedContent.length - 1]?.order || 0) + 1;
+          }
+        } else {
+          // Default to end
+          newOrder = (sortedContent[sortedContent.length - 1]?.order || 0) + 1;
+        }
+        
+        const newElement = {
+          id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: 'block' as const,
+          order: newOrder,
+          blockId: block.id,
+          blockType: block.type,
+          originalBlock: block,
+          isOverridden: false,
+          overrideContent: undefined,
+        };
+        
+        setPromptContent(prev => [...prev, newElement].sort((a, b) => a.order - b.order));
+      }
     }
   }, [promptContent]);
 
