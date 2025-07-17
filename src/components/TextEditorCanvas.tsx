@@ -364,7 +364,7 @@ export function TextEditorCanvas({
 
                 {/* Add Button */}
                 {!isDragging && (
-                  <div className="flex items-center justify-center py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center justify-center py-1 my-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => addTextElement(element.id)}
                       className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded-full hover:bg-gray-600 transition-colors"
