@@ -16,10 +16,11 @@ interface SidebarProps {
   allVariables: string[];
   onVariableChange: (variable: string, value: string) => void;
   
-  // Prompts panel props (mocked for now)
+  // Prompts panel props
   prompts: any[];
   onPromptSelect?: (prompt: any) => void;
-  onPromptDelete?: (promptId: string) => void;
+  onPromptLoad?: (prompt: any) => void;
+  onPromptDelete?: (promptId: number) => void;
 }
 
 export interface SidebarPanel {
@@ -36,6 +37,7 @@ export function Sidebar({
   onVariableChange,
   prompts,
   onPromptSelect,
+  onPromptLoad,
   onPromptDelete,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -155,6 +157,7 @@ export function Sidebar({
                       <SidebarPromptsPanel
                         prompts={prompts}
                         onPromptSelect={onPromptSelect}
+                        onPromptLoad={onPromptLoad}
                         onPromptDelete={onPromptDelete}
                       />
                     )}

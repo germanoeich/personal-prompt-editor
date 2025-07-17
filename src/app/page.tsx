@@ -24,6 +24,11 @@ export default function Home() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
   const [blocksError, setBlocksError] = useState<string | null>(null);
+  
+  // Prompts state
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
 
   // Load blocks from API
   const loadBlocks = useCallback(async () => {
@@ -46,22 +51,41 @@ export default function Home() {
     }
   }, []);
 
+  // Load prompts from API
+  const loadPrompts = useCallback(async () => {
+    setIsLoadingPrompts(true);
+    
+    try {
+      const response = await fetch('/api/prompts');
+      if (!response.ok) {
+        throw new Error(`Failed to load prompts: ${response.statusText}`);
+      }
+      
+      const promptsData = await response.json();
+      setPrompts(promptsData);
+    } catch (error) {
+      console.error('Error loading prompts:', error);
+    } finally {
+      setIsLoadingPrompts(false);
+    }
+  }, []);
+
   // Initialize application
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Seed database if needed
-        await fetch('/api/seed', { method: 'POST' });
+        // Load blocks and prompts
+        await Promise.all([loadBlocks(), loadPrompts()]);
         
-        // Load blocks
-        await loadBlocks();
+        // Seed database if needed (only if empty)
+        await fetch('/api/seed', { method: 'POST' });
       } catch (error) {
         console.error('Failed to initialize app:', error);
       }
     };
 
     initializeApp();
-  }, [loadBlocks]);
+  }, [loadBlocks, loadPrompts]);
 
   // Block CRUD operations
   const handleBlockCreate = useCallback(async (blockData: any) => {
@@ -139,7 +163,7 @@ export default function Home() {
     }
   }, []);
 
-  // Prompt operations (basic - will be enhanced later)
+  // Prompt operations
   const handleSavePrompt = useCallback(async (title: string) => {
     if (promptContent.length === 0) {
       alert('Add some content to your prompt before saving.');
@@ -147,32 +171,85 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch('/api/prompts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          blockComposition: promptContent, // TODO: Update API to handle new structure
-          variables,
-          tags: [], // TODO: Extract from blocks or allow user input
-          categories: [], // TODO: Extract from blocks or allow user input
-        }),
+      const { apiHelpers } = await import('@/lib/api');
+      const response = await apiHelpers.savePromptFromContent(
+        promptContent,
+        variables,
+        title,
+        [], // tags
+        []  // categories
+      );
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      setCurrentPrompt(response.data!);
+      
+      // Refresh prompts list
+      loadPrompts();
+      
+      console.log('Prompt saved successfully:', response.data);
+    } catch (error) {
+      console.error('Error saving prompt:', error);
+      alert('Failed to save prompt: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  }, [promptContent, variables, loadPrompts]);
+
+  // Load prompt functionality
+  const handlePromptLoad = useCallback(async (prompt: Prompt) => {
+    setIsLoadingPrompt(true);
+    
+    try {
+      const { apiHelpers } = await import('@/lib/api');
+      const result = await apiHelpers.loadPromptAsContent(prompt.id);
+      
+      if (!result) {
+        throw new Error('Failed to load prompt content');
+      }
+      
+      setPromptContent(result.promptContent);
+      setVariables(result.variables);
+      setCurrentPrompt(result.prompt);
+      
+      console.log('Prompt loaded successfully:', result.prompt.title);
+    } catch (error) {
+      console.error('Error loading prompt:', error);
+      alert('Failed to load prompt: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsLoadingPrompt(false);
+    }
+  }, []);
+
+  // Delete prompt functionality
+  const handlePromptDelete = useCallback(async (promptId: number) => {
+    if (!confirm('Are you sure you want to delete this prompt?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/prompts/${promptId}`, {
+        method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to save prompt: ${response.statusText}`);
+        throw new Error(`Failed to delete prompt: ${response.statusText}`);
       }
 
-      const savedPrompt = await response.json();
-      setCurrentPrompt(savedPrompt);
+      // Refresh prompts list
+      loadPrompts();
       
-      // TODO: Add success notification
-      console.log('Prompt saved successfully:', savedPrompt);
+      // Clear current prompt if it was the deleted one
+      if (currentPrompt?.id === promptId) {
+        setCurrentPrompt(null);
+      }
+      
+      console.log('Prompt deleted successfully');
     } catch (error) {
-      console.error('Error saving prompt:', error);
-      // TODO: Add error notification
+      console.error('Error deleting prompt:', error);
+      alert('Failed to delete prompt: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
-  }, [promptContent, variables]);
+  }, [currentPrompt, loadPrompts]);
 
   // Calculate all variables needed
   const allVariables = useMemo(() => {
@@ -373,6 +450,7 @@ export default function Home() {
           onShowPreviewToggle={handleShowPreviewToggle}
           allVariables={allVariables}
           blocks={blocks}
+          isLoading={isLoadingPrompt}
         />
 
         {/* Block Library */}
@@ -392,15 +470,12 @@ export default function Home() {
         variables={variables}
         allVariables={allVariables}
         onVariableChange={handleVariableChange}
-        prompts={[]} // TODO: Connect to real prompts data
+        prompts={prompts}
         onPromptSelect={(prompt) => {
-          // TODO: Load prompt into canvas
           console.log('Selected prompt:', prompt);
         }}
-        onPromptDelete={(promptId) => {
-          // TODO: Delete prompt
-          console.log('Delete prompt:', promptId);
-        }}
+        onPromptLoad={handlePromptLoad}
+        onPromptDelete={handlePromptDelete}
       />
 
       {/* Status Bar */}

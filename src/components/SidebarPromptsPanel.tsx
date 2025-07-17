@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   MagnifyingGlassIcon,
   EllipsisVerticalIcon,
@@ -9,76 +9,41 @@ import {
   TrashIcon,
   PencilIcon,
   DocumentDuplicateIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { Prompt } from '@/types';
 
 interface SidebarPromptsPanelProps {
-  prompts: any[];
-  onPromptSelect?: (prompt: any) => void;
-  onPromptDelete?: (promptId: string) => void;
+  prompts: Prompt[];
+  onPromptSelect?: (prompt: Prompt) => void;
+  onPromptDelete?: (promptId: number) => void;
+  onPromptLoad?: (prompt: Prompt) => void;
 }
-
-// Mock data for demonstration
-const mockPrompts = [
-  {
-    id: '1',
-    title: 'Creative Writing Assistant',
-    description: 'A comprehensive prompt for creative writing tasks',
-    lastModified: new Date(Date.now() - 86400000), // 1 day ago
-    isFavorite: true,
-    tags: ['creative', 'writing'],
-    usage: 42,
-  },
-  {
-    id: '2',
-    title: 'Code Review Helper',
-    description: 'Technical code review and improvement suggestions',
-    lastModified: new Date(Date.now() - 172800000), // 2 days ago
-    isFavorite: false,
-    tags: ['coding', 'review'],
-    usage: 28,
-  },
-  {
-    id: '3',
-    title: 'Meeting Notes Summarizer',
-    description: 'Extract key points and action items from meeting transcripts',
-    lastModified: new Date(Date.now() - 259200000), // 3 days ago
-    isFavorite: true,
-    tags: ['meeting', 'summary'],
-    usage: 15,
-  },
-  {
-    id: '4',
-    title: 'Email Response Generator',
-    description: 'Professional email responses for various scenarios',
-    lastModified: new Date(Date.now() - 604800000), // 1 week ago
-    isFavorite: false,
-    tags: ['email', 'professional'],
-    usage: 8,
-  },
-  {
-    id: '5',
-    title: 'Data Analysis Insights',
-    description: 'Analyze datasets and provide actionable insights',
-    lastModified: new Date(Date.now() - 1209600000), // 2 weeks ago
-    isFavorite: false,
-    tags: ['data', 'analysis'],
-    usage: 3,
-  },
-];
 
 export function SidebarPromptsPanel({
   prompts,
   onPromptSelect,
   onPromptDelete,
+  onPromptLoad,
 }: SidebarPromptsPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'usage' | 'name'>('recent');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Use mock data for now
-  const displayPrompts = mockPrompts;
+  // Use real prompts data
+  const displayPrompts = prompts.map(prompt => ({
+    id: prompt.id.toString(),
+    title: prompt.title,
+    description: prompt.content_snapshot.substring(0, 100) + (prompt.content_snapshot.length > 100 ? '...' : ''),
+    lastModified: new Date(prompt.updated_at),
+    isFavorite: false, // TODO: Add favorites support
+    tags: prompt.tags || [],
+    usage: 0, // TODO: Add usage tracking
+    prompt: prompt, // Store the full prompt object
+  }));
 
   const filteredPrompts = displayPrompts
     .filter(prompt => {
@@ -102,9 +67,20 @@ export function SidebarPromptsPanel({
 
   const handlePromptClick = useCallback((prompt: any) => {
     if (onPromptSelect) {
-      onPromptSelect(prompt);
+      onPromptSelect(prompt.prompt);
     }
   }, [onPromptSelect]);
+
+  const handlePromptLoad = useCallback(async (prompt: any) => {
+    if (onPromptLoad) {
+      setIsLoading(true);
+      try {
+        await onPromptLoad(prompt.prompt);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [onPromptLoad]);
 
   const handleMenuClick = useCallback((e: React.MouseEvent, promptId: string) => {
     e.stopPropagation();
@@ -199,12 +175,25 @@ export function SidebarPromptsPanel({
                       {prompt.title}
                     </h3>
                   </div>
-                  <button
-                    onClick={(e) => handleMenuClick(e, prompt.id)}
-                    className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
-                  >
-                    <EllipsisVerticalIcon className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePromptLoad(prompt);
+                      }}
+                      disabled={isLoading}
+                      className="p-1 text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+                      title="Load this prompt"
+                    >
+                      <ArrowDownTrayIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => handleMenuClick(e, prompt.id)}
+                      className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
+                    >
+                      <EllipsisVerticalIcon className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Description */}
@@ -245,13 +234,14 @@ export function SidebarPromptsPanel({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        // TODO: Implement edit functionality
+                        handlePromptLoad(prompt);
                         setOpenMenuId(null);
                       }}
-                      className="w-full px-3 py-1.5 text-xs text-left text-gray-300 hover:bg-gray-700 flex items-center gap-2"
+                      disabled={isLoading}
+                      className="w-full px-3 py-1.5 text-xs text-left text-blue-400 hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
                     >
-                      <PencilIcon className="w-3 h-3" />
-                      Edit
+                      <ArrowDownTrayIcon className="w-3 h-3" />
+                      Load
                     </button>
                     <button
                       onClick={(e) => {
@@ -268,7 +258,7 @@ export function SidebarPromptsPanel({
                       onClick={(e) => {
                         e.stopPropagation();
                         if (onPromptDelete) {
-                          onPromptDelete(prompt.id);
+                          onPromptDelete(parseInt(prompt.id));
                         }
                         setOpenMenuId(null);
                       }}

@@ -4,7 +4,22 @@ import { extractVariables } from '@/lib/variables';
 
 export async function POST() {
   try {
-    // Clear existing data
+    // Check if database already has data
+    const existingBlocks = dbManager.getBlocks();
+    const existingPrompts = dbManager.getPrompts();
+    
+    if (existingBlocks.length > 0 || existingPrompts.length > 0) {
+      return NextResponse.json({ 
+        message: 'Database already seeded',
+        stats: {
+          ratingCategories: 0,
+          presetBlocks: existingBlocks.length,
+          samplePrompts: existingPrompts.length
+        }
+      });
+    }
+    
+    // Clear existing data (in case of partial data)
     const db = (dbManager as any).db;
     db.exec('DELETE FROM ratings');
     db.exec('DELETE FROM prompt_versions');
@@ -214,14 +229,29 @@ export async function POST() {
     ];
 
     for (const prompt of samplePrompts) {
+      // Convert blockComposition to text format
+      let contentText = '';
+      const enabledBlocks = prompt.blockComposition.filter(block => block.enabled);
+      for (const block of enabledBlocks) {
+        if (block.type === 'preset') {
+          contentText += `<block id="${block.id}" />\n\n`;
+        } else {
+          // Escape any content that might contain tags
+          const escapedContent = block.content
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+          contentText += `<text>${escapedContent}</text>\n\n`;
+        }
+      }
+      
       // Generate content snapshot
       let contentSnapshot = '';
-      const enabledBlocks = prompt.blockComposition.filter(block => block.enabled);
       for (const block of enabledBlocks) {
         contentSnapshot += block.content + '\n\n';
       }
       
-      // Apply variable replacements
+      // Apply variable replacements to snapshot
       for (const [key, value] of Object.entries(prompt.variables)) {
         contentSnapshot = contentSnapshot.replace(new RegExp(`{{${key}}}`, 'g'), value);
       }
@@ -229,7 +259,7 @@ export async function POST() {
       dbManager.createPrompt({
         title: prompt.title,
         contentSnapshot: contentSnapshot.trim(),
-        blockComposition: prompt.blockComposition,
+        contentText: contentText.trim(),
         tags: prompt.tags,
         categories: prompt.categories,
         variables: prompt.variables as any

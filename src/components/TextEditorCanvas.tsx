@@ -17,6 +17,8 @@ import {
   Block 
 } from '@/types';
 import { extractVariables, replaceVariables } from '@/lib/variables';
+import { generateElementId } from '@/lib/utils';
+import { apiHelpers } from '@/lib/api';
 import { TextEditorBlock } from './TextEditorBlock';
 import { TextEditorText } from './TextEditorText';
 import { DropZone } from './DropZone';
@@ -30,6 +32,7 @@ interface TextEditorCanvasProps {
   onShowPreviewToggle: () => void;
   allVariables: string[];
   blocks: Block[];
+  isLoading?: boolean;
 }
 
 export function TextEditorCanvas({
@@ -41,10 +44,14 @@ export function TextEditorCanvas({
   onShowPreviewToggle,
   allVariables,
   blocks,
+  isLoading = false,
 }: TextEditorCanvasProps) {
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
   const [focusedElementId, setFocusedElementId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Droppable setup for text editor
@@ -86,7 +93,7 @@ export function TextEditorCanvas({
     }
 
     const newElement: PromptTextElement = {
-      id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: generateElementId('text'),
       type: 'text',
       order: newOrder,
       content: '',
@@ -119,7 +126,7 @@ export function TextEditorCanvas({
     }
 
     const newElement: PromptBlockElement = {
-      id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: generateElementId('block'),
       type: 'block',
       order: newOrder,
       blockId: block.id,
@@ -230,6 +237,38 @@ export function TextEditorCanvas({
     }
   }, [finalContent]);
 
+  // Save prompt
+  const savePrompt = useCallback(async () => {
+    if (isSaving) return;
+    
+    setIsSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    try {
+      const title = `Prompt - ${new Date().toLocaleString()}`;
+      const response = await apiHelpers.savePromptFromContent(
+        promptContent,
+        variables,
+        title,
+        [], // tags
+        []  // categories
+      );
+
+      if (response.error) {
+        setSaveError(response.error);
+      } else {
+        setSaveSuccess(true);
+        // Clear success message after 3 seconds
+        setTimeout(() => setSaveSuccess(false), 3000);
+      }
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [promptContent, variables, isSaving]);
+
   // Handle block drop from library
   const handleBlockDrop = useCallback((block: Block, afterElementId?: string) => {
     addBlockElement(block, afterElementId);
@@ -242,7 +281,17 @@ export function TextEditorCanvas({
   );
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col h-full relative">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-900/50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-600 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <div className="text-white">Loading prompt...</div>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0">
         <h2 className="text-xl font-semibold text-white">Prompt Builder</h2>
@@ -269,8 +318,40 @@ export function TextEditorCanvas({
           >
             Copy Prompt
           </button>
+
+          <button
+            onClick={savePrompt}
+            disabled={promptContent.length === 0 || isSaving}
+            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+              promptContent.length > 0 && !isSaving
+                ? saveSuccess
+                  ? 'border-green-500 bg-green-600 text-white'
+                  : saveError
+                  ? 'border-red-500 bg-red-600 text-white'
+                  : 'border-purple-500 bg-purple-600 text-white hover:bg-purple-700'
+                : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {isSaving ? 'Saving...' : saveSuccess ? 'Saved!' : saveError ? 'Error' : 'Save'}
+          </button>
         </div>
       </div>
+
+      {/* Save Error Message */}
+      {saveError && (
+        <div className="p-3 bg-red-900/20 border-b border-red-500/30 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <XMarkIcon className="w-4 h-4 text-red-400" />
+            <span className="text-sm text-red-300">Save failed: {saveError}</span>
+            <button
+              onClick={() => setSaveError(null)}
+              className="ml-auto text-red-400 hover:text-red-300 transition-colors"
+            >
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Preview Section */}
       {showPreview && (
