@@ -311,9 +311,7 @@ export function TextEditorCanvas({
             )}
           </div>
         ) : (
-          <div className={`max-w-4xl mx-auto space-y-2 ${
-            isOver ? 'ring-2 ring-blue-500/50 rounded-lg p-4' : ''
-          }`}>
+          <div className="max-w-4xl mx-auto space-y-2">
             {/* Top drop zone */}
             <DropZone 
               id="drop-zone-top" 
@@ -396,14 +394,6 @@ export function TextEditorCanvas({
                 Add Text Block
               </button>
             </div>
-            
-            {/* Drop indicator when dragging */}
-            {isOver && (
-              <div className="text-center text-blue-300 py-4">
-                <div className="text-2xl mb-2">📦</div>
-                <div className="text-sm">Drop to add block</div>
-              </div>
-            )}
           </div>
         )}
       </div>

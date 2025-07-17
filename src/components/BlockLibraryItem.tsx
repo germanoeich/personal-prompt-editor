@@ -47,9 +47,8 @@ export function BlockLibraryItem({
     },
   });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    opacity: isDragging ? 0.5 : 1,
+  const style = isDragging ? {
+    opacity: 0.4,
   } : undefined;
 
   const handleSave = () => {
@@ -87,7 +86,7 @@ export function BlockLibraryItem({
       style={style}
       className={`
         group border rounded-lg bg-gray-800 shadow-sm transition-all duration-200
-        ${isDragging ? 'shadow-lg cursor-grabbing' : 'cursor-grab hover:shadow-md'}
+        ${isDragging ? 'cursor-grabbing' : 'cursor-grab hover:shadow-md'}
         ${isExpanded ? 'border-blue-600' : 'border-gray-600'}
       `}
       {...attributes}

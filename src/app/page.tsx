@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { CanvasBlock, Block, Prompt, PromptContent, PromptTextElement } from '@/types';
 import { TextEditorCanvas } from '@/components/TextEditorCanvas';
@@ -15,6 +15,7 @@ export default function Home() {
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
+  const [activeBlock, setActiveBlock] = useState<Block | null>(null);
   
   // Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(320);
@@ -216,9 +217,18 @@ export default function Home() {
     })
   );
 
-  // Handle drag end for adding blocks to text editor
+  // Handle drag events
+  const handleDragStart = useCallback((event: any) => {
+    const { active } = event;
+    if (active.data.current?.type === 'library-block') {
+      setActiveBlock(active.data.current.block);
+    }
+  }, []);
+
   const handleDragEnd = useCallback((event: any) => {
     const { active, over } = event;
+    
+    setActiveBlock(null);
     
     if (over && active.data.current?.type === 'library-block') {
       const block = active.data.current.block;
@@ -285,6 +295,7 @@ export default function Home() {
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div className="min-h-screen bg-gray-900">
@@ -430,6 +441,28 @@ export default function Home() {
         </div>
       </div>
       </div>
+      
+      <DragOverlay>
+        {activeBlock && (
+          <div className="border rounded-lg bg-gray-800 shadow-2xl border-blue-500 p-3 opacity-90 rotate-2 scale-105">
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-0.5 text-xs rounded-full ${
+                activeBlock.type === 'preset' 
+                  ? 'bg-blue-900/30 text-blue-300' 
+                  : 'bg-gray-700 text-gray-300'
+              }`}>
+                {activeBlock.type}
+              </span>
+              <h3 className="font-medium text-white text-sm">
+                {activeBlock.title}
+              </h3>
+            </div>
+            <div className="text-xs text-gray-400 mt-1 line-clamp-2">
+              {activeBlock.content}
+            </div>
+          </div>
+        )}
+      </DragOverlay>
     </DndContext>
   );
 }
