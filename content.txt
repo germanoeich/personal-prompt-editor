@@ -1,0 +1,34 @@
+Example prompt:
+
+Let's assume that:
+block with id = 1 is a preset block that defines the tone of the LLM, with the following prompt: Be direct, concise, keep your replies short and objetive.
+block with id = 12 is a block that tells the model to output in some json format
+```
+<block id=1 />
+
+Please look for any grammar mistakes in this text:
+
+// Here would be some text for the LLM to analyze (not a preset)
+
+<block id=12 />
+```
+
+In the UI, I expect it to look like
+
+[Tone preset block] - Displays the block content, name, etc 
+[One off block] - Text content (Please look for any grammar mistakes in this text:)
+[Output preset block] - Output block
+(+ icon to add a new one off block)
+
+
+One of blocks are not persisted block entities, its part of the prompt. We'll only render it as a block to keep consistency, nothing more.
+
+All blocks are editable inline, including preset ones. We'll use a override system, where we keep the reference to the original block, but override the content:
+
+```
+<block id=1>This is a prompt override, we can also use {{originalText}} to append the original block text to our override</block>
+
+Some more text
+```
+
+In this instance, we would see a clear indication that the block is being overriding and show a reset and a save button for the preset.

@@ -3,22 +3,21 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { CanvasBlock, Block, Prompt } from '@/types';
-import { AdvancedCanvas } from '@/components/AdvancedCanvas';
+import { CanvasBlock, Block, Prompt, PromptContent, PromptTextElement } from '@/types';
+import { TextEditorCanvas } from '@/components/TextEditorCanvas';
 import { AdvancedBlockLibrary } from '@/components/AdvancedBlockLibrary';
-import { VariablesPanel } from '@/components/VariablesPanel';
+import { Sidebar } from '@/components/Sidebar';
 import { extractVariables } from '@/lib/variables';
 
 export default function Home() {
   // Core state
-  const [canvasBlocks, setCanvasBlocks] = useState<CanvasBlock[]>([]);
+  const [promptContent, setPromptContent] = useState<PromptContent>([]);
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   
-  // Variables panel state
-  const [isVariablesPanelOpen, setIsVariablesPanelOpen] = useState(false);
-  const [variablesPanelWidth, setVariablesPanelWidth] = useState(300);
+  // Sidebar state
+  const [sidebarWidth, setSidebarWidth] = useState(320);
 
   // Block library state
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -101,18 +100,15 @@ export default function Home() {
         block.id === id ? updatedBlock : block
       ));
 
-      // Update any canvas blocks that reference this preset block
-      setCanvasBlocks(prev => prev.map(canvasBlock => {
-        if (canvasBlock.id === id && canvasBlock.type === 'preset') {
+      // Update any blocks in prompt content that reference this preset block
+      setPromptContent(prev => prev.map(element => {
+        if (element.type === 'block' && element.blockId === id && element.blockType === 'preset') {
           return {
-            ...canvasBlock,
-            ...updatedBlock,
-            // Preserve canvas-specific properties
-            enabled: canvasBlock.enabled,
-            canvasId: canvasBlock.canvasId,
+            ...element,
+            originalBlock: updatedBlock,
           };
         }
-        return canvasBlock;
+        return element;
       }));
     } catch (error) {
       console.error('Error updating block:', error);
@@ -132,9 +128,9 @@ export default function Home() {
 
       setBlocks(prev => prev.filter(block => block.id !== id));
       
-      // Remove any canvas blocks that reference this preset block
-      setCanvasBlocks(prev => prev.filter(canvasBlock => 
-        !(canvasBlock.id === id && canvasBlock.type === 'preset')
+      // Remove any blocks in prompt content that reference this preset block
+      setPromptContent(prev => prev.filter(element => 
+        !(element.type === 'block' && element.blockId === id && element.blockType === 'preset')
       ));
     } catch (error) {
       console.error('Error deleting block:', error);
@@ -144,8 +140,8 @@ export default function Home() {
 
   // Prompt operations (basic - will be enhanced later)
   const handleSavePrompt = useCallback(async (title: string) => {
-    if (canvasBlocks.length === 0) {
-      alert('Add some blocks to your prompt before saving.');
+    if (promptContent.length === 0) {
+      alert('Add some content to your prompt before saving.');
       return;
     }
 
@@ -155,7 +151,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
-          blockComposition: canvasBlocks,
+          blockComposition: promptContent, // TODO: Update API to handle new structure
           variables,
           tags: [], // TODO: Extract from blocks or allow user input
           categories: [], // TODO: Extract from blocks or allow user input
@@ -175,19 +171,25 @@ export default function Home() {
       console.error('Error saving prompt:', error);
       // TODO: Add error notification
     }
-  }, [canvasBlocks, variables]);
+  }, [promptContent, variables]);
 
   // Calculate all variables needed
   const allVariables = useMemo(() => {
     const variableSet = new Set<string>();
-    canvasBlocks
-      .filter(block => block.enabled)
-      .forEach(block => {
-        const blockVariables = extractVariables(block.content);
+    promptContent.forEach(element => {
+      if (element.type === 'text') {
+        const textVariables = extractVariables(element.content);
+        textVariables.forEach(variable => variableSet.add(variable));
+      } else if (element.type === 'block') {
+        const blockContent = element.isOverridden 
+          ? element.overrideContent || ''
+          : element.originalBlock?.content || '';
+        const blockVariables = extractVariables(blockContent);
         blockVariables.forEach(variable => variableSet.add(variable));
-      });
+      }
+    });
     return Array.from(variableSet);
-  }, [canvasBlocks]);
+  }, [promptContent]);
 
   // Variable management
   const handleVariablesChange = useCallback((newVariables: Record<string, string>) => {
@@ -202,10 +204,6 @@ export default function Home() {
     setShowPreview(prev => !prev);
   }, []);
 
-  const handleVariablesPanelToggle = useCallback(() => {
-    setIsVariablesPanelOpen(prev => !prev);
-  }, []);
-
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -218,36 +216,42 @@ export default function Home() {
     })
   );
 
-  // Drag and drop handlers from AdvancedCanvas
-  const [dragHandlers, setDragHandlers] = useState<{
-    onDragStart: (event: any) => void;
-    onDragOver: (event: any) => void;
-    onDragEnd: (event: any) => void;
-  } | null>(null);
-
-  const handleDragHandlersReady = useCallback((handlers: {
-    onDragStart: (event: any) => void;
-    onDragOver: (event: any) => void;
-    onDragEnd: (event: any) => void;
-  }) => {
-    setDragHandlers(handlers);
-  }, []);
+  // Handle drag end for adding blocks to text editor
+  const handleDragEnd = useCallback((event: any) => {
+    const { active, over } = event;
+    
+    if (over && active.data.current?.type === 'library-block') {
+      const block = active.data.current.block;
+      
+      // Add block to prompt content
+      const newElement = {
+        id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'block' as const,
+        order: promptContent.length + 1,
+        blockId: block.id,
+        blockType: block.type,
+        originalBlock: block,
+        isOverridden: false,
+        overrideContent: undefined,
+      };
+      
+      setPromptContent(prev => [...prev, newElement].sort((a, b) => a.order - b.order));
+    }
+  }, [promptContent]);
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragStart={dragHandlers?.onDragStart}
-      onDragOver={dragHandlers?.onDragOver}
-      onDragEnd={dragHandlers?.onDragEnd}
+      onDragEnd={handleDragEnd}
     >
       <div className="min-h-screen bg-gray-900">
         {/* Header */}
         <header className="bg-gray-800 border-b border-gray-700 shadow-sm">
         <div 
-          className="px-6 py-4 transition-all duration-200"
+          className="px-6 py-4 transition-all duration-300"
           style={{ 
-            marginLeft: isVariablesPanelOpen ? `${variablesPanelWidth}px` : '0px'
+            marginLeft: `${sidebarWidth}px`
           }}
         >
           <div className="flex items-center justify-between">
@@ -275,9 +279,9 @@ export default function Home() {
                     handleSavePrompt(title);
                   }
                 }}
-                disabled={canvasBlocks.length === 0}
+                disabled={promptContent.length === 0}
                 className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
-                  canvasBlocks.length > 0
+                  promptContent.length > 0
                     ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
                     : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
                 }`}
@@ -301,23 +305,21 @@ export default function Home() {
 
       {/* Main Content */}
       <main 
-        className="flex h-[calc(100vh-88px)] transition-all duration-200"
+        className="flex h-[calc(100vh-88px)] transition-all duration-300 min-h-0"
         style={{ 
-          marginLeft: isVariablesPanelOpen ? `${variablesPanelWidth}px` : '0px'
+          marginLeft: `${sidebarWidth}px`
         }}
       >
         {/* Canvas Area */}
-        <AdvancedCanvas
-          canvasBlocks={canvasBlocks}
-          setCanvasBlocks={setCanvasBlocks}
+        <TextEditorCanvas
+          promptContent={promptContent}
+          setPromptContent={setPromptContent}
           variables={variables}
           onVariablesChange={handleVariablesChange}
           showPreview={showPreview}
           onShowPreviewToggle={handleShowPreviewToggle}
           allVariables={allVariables}
-          onVariablesPanelToggle={handleVariablesPanelToggle}
-          isVariablesPanelOpen={isVariablesPanelOpen}
-          onDragHandlersReady={handleDragHandlersReady}
+          blocks={blocks}
         />
 
         {/* Block Library */}
@@ -332,32 +334,37 @@ export default function Home() {
         />
       </main>
 
-      {/* Variables Panel */}
-      <VariablesPanel
+      {/* Sidebar */}
+      <Sidebar
         variables={variables}
         allVariables={allVariables}
         onVariableChange={handleVariableChange}
-        isOpen={isVariablesPanelOpen}
-        onToggle={handleVariablesPanelToggle}
-        width={variablesPanelWidth}
-        onWidthChange={setVariablesPanelWidth}
+        prompts={[]} // TODO: Connect to real prompts data
+        onPromptSelect={(prompt) => {
+          // TODO: Load prompt into canvas
+          console.log('Selected prompt:', prompt);
+        }}
+        onPromptDelete={(promptId) => {
+          // TODO: Delete prompt
+          console.log('Delete prompt:', promptId);
+        }}
       />
 
       {/* Status Bar */}
       <div 
-        className="bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 transition-all duration-200"
+        className="bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 transition-all duration-300"
         style={{ 
-          marginLeft: isVariablesPanelOpen ? `${variablesPanelWidth}px` : '0px'
+          marginLeft: `${sidebarWidth}px`
         }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span>
-              {canvasBlocks.length} block{canvasBlocks.length !== 1 ? 's' : ''} in canvas
+              {promptContent.length} element{promptContent.length !== 1 ? 's' : ''} in prompt
             </span>
             <span>•</span>
             <span>
-              {canvasBlocks.filter(b => b.enabled).length} enabled
+              {promptContent.filter(el => el.type === 'block').length} block{promptContent.filter(el => el.type === 'block').length !== 1 ? 's' : ''}, {promptContent.filter(el => el.type === 'text').length} text
             </span>
             {Object.keys(variables).length > 0 && (
               <>

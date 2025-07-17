@@ -77,6 +77,29 @@ export interface CanvasBlock extends Block {
   position?: { x: number; y: number };
 }
 
+// New types for text-editor approach
+export interface PromptElement {
+  id: string;
+  type: 'block' | 'text';
+  order: number;
+}
+
+export interface PromptTextElement extends PromptElement {
+  type: 'text';
+  content: string;
+}
+
+export interface PromptBlockElement extends PromptElement {
+  type: 'block';
+  blockId: number;
+  blockType: 'preset' | 'one-off';
+  originalBlock?: Block;
+  isOverridden: boolean;
+  overrideContent?: string;
+}
+
+export type PromptContent = (PromptTextElement | PromptBlockElement)[];
+
 export interface DragItem {
   type: 'block';
   block: Block;
