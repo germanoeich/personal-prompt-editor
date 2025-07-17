@@ -17,8 +17,19 @@ export default function Home() {
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   const [activeBlock, setActiveBlock] = useState<Block | null>(null);
   
-  // Sidebar state
-  const [sidebarWidth, setSidebarWidth] = useState(320);
+  // Dynamic widths state
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarWidth');
+      return saved ? parseInt(saved, 10) : 320;
+    }
+    return 320;
+  });
+  
+  // Handle sidebar width changes
+  const handleSidebarWidthChange = useCallback((newWidth: number) => {
+    setSidebarWidth(newWidth);
+  }, []);
 
   // Block library state
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -511,6 +522,7 @@ export default function Home() {
         }}
         onPromptLoad={handlePromptLoad}
         onPromptDelete={handlePromptDelete}
+        onWidthChange={handleSidebarWidthChange}
       />
 
       {/* Status Bar */}

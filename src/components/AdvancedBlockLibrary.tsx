@@ -39,7 +39,13 @@ export function AdvancedBlockLibrary({
     type: undefined,
   });
   
-  const [width, setWidth] = useState(320);
+  const [width, setWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('blockLibraryWidth');
+      return saved ? parseInt(saved, 10) : 320;
+    }
+    return 320;
+  });
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const minWidth = 256; // min-w-64
@@ -233,6 +239,7 @@ export function AdvancedBlockLibrary({
       const deltaX = startX - e.clientX; // Subtract because we're resizing from the left
       const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + deltaX));
       setWidth(newWidth);
+      localStorage.setItem('blockLibraryWidth', newWidth.toString());
     };
     
     const handleMouseUp = () => {

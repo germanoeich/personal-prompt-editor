@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { 
   ChevronLeftIcon, 
   ChevronRightIcon,
@@ -21,6 +21,9 @@ interface SidebarProps {
   onPromptSelect?: (prompt: any) => void;
   onPromptLoad?: (prompt: any) => void;
   onPromptDelete?: (promptId: number) => void;
+  
+  // Width callback
+  onWidthChange?: (width: number) => void;
 }
 
 export interface SidebarPanel {
@@ -39,8 +42,20 @@ export function Sidebar({
   onPromptSelect,
   onPromptLoad,
   onPromptDelete,
+  onWidthChange,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [width, setWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebarWidth');
+      return saved ? parseInt(saved, 10) : 320;
+    }
+    return 320;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const minWidth = 240; // Minimum sidebar width
+  const maxWidth = 480; // Maximum sidebar width
   const [panels, setPanels] = useState<SidebarPanel[]>([
     {
       id: 'variables',
@@ -70,15 +85,67 @@ export function Sidebar({
     ));
   }, []);
 
+  // Handle resize functionality
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    
+    const startX = e.clientX;
+    const startWidth = width;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX;
+      const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + deltaX));
+      setWidth(newWidth);
+      localStorage.setItem('sidebarWidth', newWidth.toString());
+      onWidthChange?.(newWidth);
+    };
+    
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [width, minWidth, maxWidth]);
+
+  // Prevent text selection during resize
+  useEffect(() => {
+    if (isResizing) {
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+    } else {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+    
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isResizing]);
+
   const expandedPanels = panels.filter(panel => panel.isExpanded);
 
-  const sidebarWidth = isCollapsed ? 60 : 320;
+  const sidebarWidth = isCollapsed ? 60 : width;
 
   return (
     <div 
-      className="fixed left-0 top-0 h-full bg-gray-800 border-r border-gray-700 flex flex-col transition-all duration-300 z-50"
+      ref={containerRef}
+      className="fixed left-0 top-0 h-full bg-gray-800 border-r border-gray-700 flex flex-col transition-all duration-300 z-50 group"
       style={{ width: `${sidebarWidth}px` }}
     >
+      {/* Resize Handle */}
+      {!isCollapsed && (
+        <div 
+          className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize transition-all z-10 ${
+            isResizing ? 'bg-blue-500' : 'bg-gray-600 hover:bg-blue-500 opacity-0 group-hover:opacity-100'
+          }`}
+          onMouseDown={handleMouseDown}
+        ></div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-gray-700">
         {!isCollapsed && (
