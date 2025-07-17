@@ -19,10 +19,6 @@ export function DropZone({ id, afterElementId, isVisible = true, label = "Drop b
     },
   });
 
-  if (!isVisible && !isOver) {
-    return null;
-  }
-
   return (
     <div
       ref={setNodeRef}
@@ -30,9 +26,11 @@ export function DropZone({ id, afterElementId, isVisible = true, label = "Drop b
         transition-all duration-200 ease-in-out
         ${isOver 
           ? 'h-16 bg-blue-900/30 border-2 border-dashed border-blue-500' 
-          : 'h-1 bg-transparent border-2 border-dashed border-transparent hover:border-gray-600'
+          : isVisible 
+            ? 'h-4 bg-gray-800/50 border-2 border-dashed border-gray-600'
+            : 'h-2 bg-transparent border-2 border-dashed border-transparent'
         }
-        ${isVisible ? 'opacity-100' : 'opacity-0 hover:opacity-100'}
+        ${isVisible ? 'opacity-100' : 'opacity-0'}
         rounded-lg mx-2 flex items-center justify-center
       `}
     >

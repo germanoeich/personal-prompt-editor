@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useRef } from 'react';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { 
   PlusIcon,
   ArrowPathIcon,
@@ -44,11 +44,19 @@ export function TextEditorCanvas({
 }: TextEditorCanvasProps) {
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
   const [focusedElementId, setFocusedElementId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Droppable setup for text editor
   const { setNodeRef, isOver } = useDroppable({
     id: 'text-editor-droppable',
+  });
+
+  // Monitor drag events to show/hide drop zones
+  useDndMonitor({
+    onDragStart: () => setIsDragging(true),
+    onDragEnd: () => setIsDragging(false),
+    onDragCancel: () => setIsDragging(false),
   });
 
   // Generate next order number
@@ -309,7 +317,7 @@ export function TextEditorCanvas({
             {/* Top drop zone */}
             <DropZone 
               id="drop-zone-top" 
-              isVisible={false}
+              isVisible={isDragging}
               label="Drop block at the beginning"
             />
             
@@ -361,7 +369,7 @@ export function TextEditorCanvas({
                 <DropZone 
                   id={`drop-zone-after-${element.id}`} 
                   afterElementId={element.id}
-                  isVisible={false}
+                  isVisible={isDragging}
                   label={`Drop block after ${element.type === 'text' ? 'text' : element.originalBlock?.title || 'block'}`}
                 />
 
