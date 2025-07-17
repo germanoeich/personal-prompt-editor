@@ -22,10 +22,10 @@ export function DropZone({ id, afterElementId, label = "Drop block here" }: Drop
     <div
       ref={setNodeRef}
       className={`
-        transition-all duration-200 ease-in-out border-2 border-dashed rounded-lg mx-4 flex items-center justify-center
+        transition-all duration-200 ease-in-out border-dashed rounded-lg mx-4 flex items-center justify-center
         ${isOver 
-          ? 'h-12 bg-blue-900/30 border-blue-500 my-1' 
-          : 'h-0 bg-transparent border-blue-500/0'
+          ? 'h-12 bg-blue-900/30 border-2 border-blue-500 my-1' 
+          : 'h-0 bg-transparent border-0'
         }
       `}
     >
