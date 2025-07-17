@@ -92,101 +92,94 @@ export function BlockLibraryItem({
       {...attributes}
       {...listeners}
     >
-      <div className="p-3">
+      <div className="p-3 relative">
+        {/* Action Buttons - positioned absolutely */}
+        <div className="absolute top-2 right-2 flex items-center gap-1">
+          {isEditing ? (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSave();
+                }}
+                className="p-1 text-green-400 hover:bg-green-900/20 rounded text-xs"
+              >
+                ✓
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCancel();
+                }}
+                className="p-1 text-gray-300 hover:bg-gray-700 rounded text-xs"
+              >
+                ✕
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                className="p-1 text-blue-400 hover:bg-blue-900/20 rounded"
+              >
+                <PencilIcon className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDuplicate();
+                }}
+                className="p-1 text-gray-300 hover:bg-gray-700 rounded"
+              >
+                <DocumentDuplicateIcon className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="p-1 text-red-400 hover:bg-red-900/20 rounded"
+              >
+                <TrashIcon className="w-3 h-3" />
+              </button>
+            </>
+          )}
+        </div>
+        
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-start flex-1 min-w-0">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleExpand();
-              }}
-              className="flex-shrink-0 p-0.5 mr-2 mt-0.5 text-gray-500 hover:text-gray-300 transition-colors"
-            >
-              {isExpanded ? (
-                <ChevronDownIcon className="w-4 h-4" />
-              ) : (
-                <ChevronRightIcon className="w-4 h-4" />
-              )}
-            </button>
-            
-            <div className="flex-1 min-w-0">
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="w-full font-medium bg-transparent text-white border-b border-gray-600 focus:border-blue-400 focus:outline-none pb-1"
-                  placeholder="Block title..."
-                  autoFocus
-                />
-              ) : (
-                <h3 className="font-medium text-white truncate">
-                  {block.title}
-                </h3>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSave();
-                  }}
-                  className="p-1 text-green-400 hover:bg-green-900/20 rounded text-xs"
-                  title="Save"
-                >
-                  ✓
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCancel();
-                  }}
-                  className="p-1 text-gray-300 hover:bg-gray-700 rounded text-xs"
-                  title="Cancel"
-                >
-                  ✕
-                </button>
-              </>
+        <div className="flex items-start pr-20"> {/* Add right padding to avoid button overlap */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand();
+            }}
+            className="flex-shrink-0 p-0.5 mr-2 mt-0.5 text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            {isExpanded ? (
+              <ChevronDownIcon className="w-4 h-4" />
             ) : (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                  }}
-                  className="p-1 text-blue-400 hover:bg-blue-900/20 rounded"
-                  title="Edit"
-                >
-                  <PencilIcon className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDuplicate();
-                  }}
-                  className="p-1 text-gray-300 hover:bg-gray-700 rounded"
-                  title="Duplicate"
-                >
-                  <DocumentDuplicateIcon className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete();
-                  }}
-                  className="p-1 text-red-400 hover:bg-red-900/20 rounded"
-                  title="Delete"
-                >
-                  <TrashIcon className="w-3 h-3" />
-                </button>
-              </>
+              <ChevronRightIcon className="w-4 h-4" />
+            )}
+          </button>
+          
+          <div className="flex-1 min-w-0">
+            {isEditing ? (
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="w-full font-medium bg-transparent text-white border-b border-gray-600 focus:border-blue-400 focus:outline-none pb-1"
+                placeholder="Block title..."
+                autoFocus
+              />
+            ) : (
+              <h3 className="font-medium text-white truncate">
+                {block.title}
+              </h3>
             )}
           </div>
         </div>
