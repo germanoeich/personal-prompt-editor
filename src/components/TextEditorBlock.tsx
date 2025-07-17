@@ -88,14 +88,14 @@ export function TextEditorBlock({
         : 'border-blue-500 bg-blue-900/10'
     }`}>
       {/* Action Bar */}
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+      <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
         <div className="flex items-center gap-1 mr-2 bg-gray-800 px-2 py-1 rounded shadow-sm">
           <BookmarkIcon className="w-3 h-3 text-blue-400" />
           <span className="text-xs text-gray-500">
             {element.originalBlock?.title || 'Block'}
           </span>
           {element.isOverridden && (
-            <ExclamationTriangleIcon className="w-3 h-3 text-orange-400" title="Block is overridden" />
+            <ExclamationTriangleIcon className="w-3 h-3 text-orange-400" />
           )}
         </div>
         
@@ -104,7 +104,6 @@ export function TextEditorBlock({
             <button
               onClick={onEdit}
               className="p-1 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              title="Edit block"
             >
               <PencilIcon className="w-3 h-3" />
             </button>
@@ -113,7 +112,6 @@ export function TextEditorBlock({
               <button
                 onClick={onReset}
                 className="p-1 text-gray-400 hover:text-orange-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-                title="Reset to original"
               >
                 <ArrowPathIcon className="w-3 h-3" />
               </button>
@@ -123,7 +121,6 @@ export function TextEditorBlock({
               <button
                 onClick={onMoveUp}
                 className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-                title="Move up"
               >
                 <ChevronUpIcon className="w-3 h-3" />
               </button>
@@ -133,7 +130,6 @@ export function TextEditorBlock({
               <button
                 onClick={onMoveDown}
                 className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-                title="Move down"
               >
                 <ChevronDownIcon className="w-3 h-3" />
               </button>
@@ -142,7 +138,6 @@ export function TextEditorBlock({
             <button
               onClick={onDelete}
               className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              title="Remove block"
             >
               <TrashIcon className="w-3 h-3" />
             </button>
@@ -154,7 +149,6 @@ export function TextEditorBlock({
             <button
               onClick={handleSave}
               className="p-1 text-green-400 hover:text-green-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              title="Save override (Ctrl+Enter)"
             >
               <CheckIcon className="w-3 h-3" />
             </button>
@@ -162,7 +156,6 @@ export function TextEditorBlock({
             <button
               onClick={onCancel}
               className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              title="Cancel (Esc)"
             >
               <XMarkIcon className="w-3 h-3" />
             </button>
