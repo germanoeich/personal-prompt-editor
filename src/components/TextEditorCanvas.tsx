@@ -311,7 +311,7 @@ export function TextEditorCanvas({
             )}
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto space-y-2">
+          <div className="max-w-4xl mx-auto space-y-1">
             {/* Top drop zone */}
             <DropZone 
               id="drop-zone-top" 
@@ -364,10 +364,10 @@ export function TextEditorCanvas({
 
                 {/* Add Button */}
                 {!isDragging && (
-                  <div className="flex items-center justify-center py-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center justify-center py-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => addTextElement(element.id)}
-                      className="flex items-center gap-1 px-3 py-1 text-xs bg-gray-700 text-gray-300 rounded-full hover:bg-gray-600 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded-full hover:bg-gray-600 transition-colors"
                     >
                       <PlusIcon className="w-3 h-3" />
                       Add Text
@@ -385,7 +385,7 @@ export function TextEditorCanvas({
             ))}
 
             {/* Final Add Button */}
-            <div className="flex items-center justify-center py-4">
+            <div className="flex items-center justify-center py-2">
               <button
                 onClick={() => addTextElement()}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

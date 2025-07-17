@@ -19,13 +19,13 @@ export function DropZone({ id, afterElementId, label = "Drop block here" }: Drop
   });
 
   return (
-    <div className="py-2">
+    <div className="py-1">
       <div
         ref={setNodeRef}
         className={`
           transition-all duration-200 ease-in-out border-2 border-dashed rounded-lg mx-4 flex items-center justify-center
           ${isOver 
-            ? 'h-16 bg-blue-900/30 border-blue-500' 
+            ? 'h-12 bg-blue-900/30 border-blue-500' 
             : 'h-2 bg-transparent border-blue-500/0'
           }
         `}
