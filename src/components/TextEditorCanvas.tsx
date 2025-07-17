@@ -311,7 +311,7 @@ export function TextEditorCanvas({
             )}
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto space-y-1">
+          <div className="max-w-4xl mx-auto">
             {/* Top drop zone */}
             <DropZone 
               id="drop-zone-top" 
