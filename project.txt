@@ -1,0 +1,132 @@
+# Overview
+Visual Prompt Builder is a tool designed to solve the problem of managing, organizing, and evolving LLM prompts. It addresses the challenges of prompt versioning, reusability, and effectiveness tracking by providing a visual interface for building prompts from reusable blocks. The tool enables users to create a library of prompt components, track their evolution over time, and rate their effectiveness across different use cases.
+
+# Core Features
+
+## Block-Based Prompt Building
+- Drag-and-drop interface for assembling prompts from reusable blocks
+- Two types of blocks: preset (saved library blocks) and one-off (prompt-specific)
+- Simple variable system using {{variable}} placeholders
+- Enable/disable blocks without removing them from prompts
+- Visual arrangement and reordering of blocks
+
+## Prompt Library Management
+- Save complete prompts with full text snapshots
+- Unified tagging and categorization system for prompts and blocks
+- Search functionality by tag, title, and category
+- No reference dependencies - prompts are self-contained snapshots
+
+## Version Control & History
+- Automatic versioning of preset blocks with snapshot history
+- Complete prompt history tracking with ability to rollback
+- When blocks are edited, prompts automatically use new versions
+- View historical prompt structures including block content and variable placeholders
+
+## Rating System
+- Rate prompts across configurable categories (e.g., Adherence, Performance, One-shot capability)
+- Categories are user-definable and can evolve over time
+- Optional rating - prompts can have partial or no ratings
+- Rate individual categories independently
+
+# User Experience
+
+## Primary User Persona
+Power users who regularly work with LLMs and need to manage dozens or hundreds of prompts across different projects and use cases. They value efficiency, organization, and the ability to quickly iterate on prompt designs.
+
+## Key User Flows
+1. **Build New Prompt**: Open builder → Drag blocks from library → Add one-off text → Set variables → Save to library → Copy final prompt
+2. **Reuse Existing Prompt**: Search library → Select prompt → Modify if needed → Set variables → Copy
+3. **Update Block**: Edit preset block → System snapshots old version → All prompts using block get updated automatically
+4. **Rate Prompt**: Use prompt in LLM → Return to tool → Add ratings for relevant categories
+
+## UI/UX Considerations
+- Split view: left side for prompt building canvas, right side for block library
+- Clean, modern interface optimized for quick actions
+- Instant search and filtering
+- One-click copy functionality
+- Visual indicators for enabled/disabled blocks
+
+# Technical Architecture
+
+## System Components
+- Frontend: React with Next.js
+- Backend: Next.js API routes
+- Database: SQLite with Knex.js for query building
+- No external dependencies for core functionality
+
+## Data Models
+- **Blocks**: id, title, content, type (preset/one-off), tags, categories, created_at, updated_at
+- **BlockVersions**: id, block_id, content, version_number, created_at
+- **Prompts**: id, title, content_snapshot, tags, categories, created_at, updated_at
+- **PromptVersions**: id, prompt_id, content_snapshot, version_number, created_at
+- **Ratings**: id, prompt_version_id, category, score, created_at
+- **RatingCategories**: id, name, description, order, active
+
+## APIs and Integrations
+- RESTful API for all CRUD operations
+- Real-time search API
+- Batch operations for tags and categories
+- Export/import functionality for backup and sharing
+
+# Development Roadmap
+
+## MVP Requirements
+- Basic drag-and-drop prompt builder with block library
+- Preset and one-off blocks with simple {{variable}} replacement
+- Save and load prompts with full text snapshots
+- Basic search by title
+- Simple version history for prompts and blocks
+- Copy to clipboard functionality
+
+## Phase 2 Enhancements
+- Full tagging and categorization system
+- Advanced search (by tag, category, content)
+- Rating system with configurable categories
+- Keyboard shortcuts for power users
+- Block usage analytics (which blocks are used most)
+
+## Phase 3 Future Features
+- Export/import functionality
+- Sharing and collaboration features
+- Template marketplace for common prompt patterns
+- Integration with LLM APIs for direct testing
+- Batch operations and bulk editing
+
+# Logical Dependency Chain
+
+1. **Foundation**: Database schema and models → Basic API endpoints
+2. **Core Builder**: Block component → Drag-and-drop interface → Variable replacement system
+3. **Library Features**: Save/load prompts → Version tracking → Search functionality
+4. **Organization**: Tagging system → Categories → Advanced search
+5. **Analytics**: Rating system → Usage tracking → Insights dashboard
+
+# Risks and Mitigations
+
+## Technical Challenges
+- **Drag-and-drop complexity**: Use established libraries like react-beautiful-dnd or dnd-kit
+- **Performance with large libraries**: Implement pagination and virtual scrolling
+- **Data migration for schema changes**: Use Knex migrations from the start
+
+## MVP Scoping
+- Start with core builder functionality to get usable product quickly
+- Defer complex features like collaboration and direct LLM integration
+- Focus on single-user experience first
+
+## Resource Constraints
+- Keep dependencies minimal to reduce maintenance burden
+- Use SQLite to avoid external database setup
+- Leverage Next.js for both frontend and backend to reduce complexity
+
+# Appendix
+
+## User Requirements Summary
+- Visual block-based prompt building (not graph-based)
+- Preset blocks and one-off blocks
+- Simple {{variable}} placeholders
+- Enable/disable blocks without deletion
+- Full prompt and block versioning
+- Configurable rating categories
+- Unified tagging system
+- Search by tag, title, category
+- React/Next.js/SQLite stack
+- Self-contained prompt snapshots (no block references)
