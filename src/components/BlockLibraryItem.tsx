@@ -94,7 +94,7 @@ export function BlockLibraryItem({
     >
       <div className="p-3 relative">
         {/* Action Buttons - positioned absolutely */}
-        <div className="absolute top-2 right-2 flex items-center gap-1">
+        <div className="absolute top-2 right-2 flex items-center gap-1.5">
           {isEditing ? (
             <>
               <button
@@ -102,7 +102,8 @@ export function BlockLibraryItem({
                   e.stopPropagation();
                   handleSave();
                 }}
-                className="p-1 text-green-400 hover:bg-green-900/20 rounded text-xs"
+                className="p-1.5 text-green-400 hover:bg-green-900/20 rounded text-sm"
+                title="Save changes"
               >
                 ✓
               </button>
@@ -111,7 +112,8 @@ export function BlockLibraryItem({
                   e.stopPropagation();
                   handleCancel();
                 }}
-                className="p-1 text-gray-300 hover:bg-gray-700 rounded text-xs"
+                className="p-1.5 text-gray-300 hover:bg-gray-700 rounded text-sm"
+                title="Cancel editing"
               >
                 ✕
               </button>
@@ -123,34 +125,37 @@ export function BlockLibraryItem({
                   e.stopPropagation();
                   setIsEditing(true);
                 }}
-                className="p-1 text-blue-400 hover:bg-blue-900/20 rounded"
+                className="p-1.5 text-blue-400 hover:bg-blue-900/20 rounded"
+                title="Edit block"
               >
-                <PencilIcon className="w-3 h-3" />
+                <PencilIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onDuplicate();
                 }}
-                className="p-1 text-gray-300 hover:bg-gray-700 rounded"
+                className="p-1.5 text-gray-300 hover:bg-gray-700 rounded"
+                title="Duplicate block"
               >
-                <DocumentDuplicateIcon className="w-3 h-3" />
+                <DocumentDuplicateIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete();
                 }}
-                className="p-1 text-red-400 hover:bg-red-900/20 rounded"
+                className="p-1.5 text-red-400 hover:bg-red-900/20 rounded"
+                title="Delete block"
               >
-                <TrashIcon className="w-3 h-3" />
+                <TrashIcon className="w-4 h-4" />
               </button>
             </>
           )}
         </div>
         
         {/* Header */}
-        <div className="flex items-start pr-20"> {/* Add right padding to avoid button overlap */}
+        <div className="flex items-start pr-24"> {/* Add right padding to avoid button overlap */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -177,7 +182,7 @@ export function BlockLibraryItem({
                 autoFocus
               />
             ) : (
-              <h3 className="font-medium text-white truncate">
+              <h3 className="font-normal text-sm text-white truncate">
                 {block.title}
               </h3>
             )}

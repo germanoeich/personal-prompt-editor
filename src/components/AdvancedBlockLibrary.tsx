@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { 
   MagnifyingGlassIcon, 
@@ -38,6 +38,12 @@ export function AdvancedBlockLibrary({
     categories: [],
     type: undefined,
   });
+  
+  const [width, setWidth] = useState(320);
+  const [isResizing, setIsResizing] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const minWidth = 256; // min-w-64
+  const maxWidth = 512; // max-w-128
   
   const [expandedBlocks, setExpandedBlocks] = useState<Set<number>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -215,8 +221,59 @@ export function AdvancedBlockLibrary({
     }
   }, [onBlockCreate]);
 
+  // Handle resize functionality
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    
+    const startX = e.clientX;
+    const startWidth = width;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = startX - e.clientX; // Subtract because we're resizing from the left
+      const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + deltaX));
+      setWidth(newWidth);
+    };
+    
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [width, minWidth, maxWidth]);
+
+  // Prevent text selection during resize
+  useEffect(() => {
+    if (isResizing) {
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+    } else {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+    
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isResizing]);
+
   return (
-    <div className="w-80 border-l border-gray-700 bg-gray-800 flex flex-col">
+    <div 
+      ref={containerRef}
+      className="border-l border-gray-700 bg-gray-800 flex flex-col relative group"
+      style={{ width: `${width}px` }}
+    >
+      {/* Resize Handle */}
+      <div 
+        className={`absolute left-0 top-0 bottom-0 w-1 cursor-col-resize transition-all z-10 ${
+          isResizing ? 'bg-blue-500' : 'bg-gray-600 hover:bg-blue-500 opacity-0 group-hover:opacity-100'
+        }`}
+        onMouseDown={handleMouseDown}
+      ></div>
       {/* Header */}
       <div className="p-4 border-b border-gray-700">
         <div className="flex items-center justify-between mb-4">
