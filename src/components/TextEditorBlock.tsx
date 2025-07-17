@@ -88,17 +88,7 @@ export function TextEditorBlock({
         : 'border-blue-500 bg-blue-900/10'
     }`}>
       {/* Action Bar */}
-      <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-        <div className="flex items-center gap-1 mr-2 bg-gray-800 px-2 py-1 rounded shadow-sm">
-          <BookmarkIcon className="w-3 h-3 text-blue-400" />
-          <span className="text-xs text-gray-500">
-            {element.originalBlock?.title || 'Block'}
-          </span>
-          {element.isOverridden && (
-            <ExclamationTriangleIcon className="w-3 h-3 text-orange-400" />
-          )}
-        </div>
-        
+      <div className="absolute top-16 right-2 flex items-center gap-1 z-10">
         {!isEditing && (
           <>
             <button
