@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { CanvasBlock, Block } from '@/types';
@@ -183,20 +183,24 @@ export function useDragAndDrop({ canvasBlocks, setCanvasBlocks, onBlockAdd }: Us
     }
   }, [canvasBlocks, setCanvasBlocks]);
 
+  const handlers = useMemo(() => ({
+    onDragStart: handleDragStart,
+    onDragOver: handleDragOver,
+    onDragEnd: handleDragEnd,
+  }), [handleDragStart, handleDragOver, handleDragEnd]);
+
+  const actions = useMemo(() => ({
+    addBlockToCanvas,
+    removeBlockFromCanvas,
+    toggleBlockEnabled,
+    updateBlockInCanvas,
+    moveBlock,
+    duplicateBlock,
+  }), [addBlockToCanvas, removeBlockFromCanvas, toggleBlockEnabled, updateBlockInCanvas, moveBlock, duplicateBlock]);
+
   return {
     dragState,
-    handlers: {
-      onDragStart: handleDragStart,
-      onDragOver: handleDragOver,
-      onDragEnd: handleDragEnd,
-    },
-    actions: {
-      addBlockToCanvas,
-      removeBlockFromCanvas,
-      toggleBlockEnabled,
-      updateBlockInCanvas,
-      moveBlock,
-      duplicateBlock,
-    },
+    handlers,
+    actions,
   };
 }

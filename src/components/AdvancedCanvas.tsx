@@ -1,18 +1,11 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
-  DndContext, 
   DragOverlay,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
@@ -29,6 +22,14 @@ interface AdvancedCanvasProps {
   onVariablesChange: (variables: Record<string, string>) => void;
   showPreview: boolean;
   onShowPreviewToggle: () => void;
+  allVariables: string[];
+  onVariablesPanelToggle: () => void;
+  isVariablesPanelOpen: boolean;
+  onDragHandlersReady?: (handlers: {
+    onDragStart: (event: any) => void;
+    onDragOver: (event: any) => void;
+    onDragEnd: (event: any) => void;
+  }) => void;
 }
 
 export function AdvancedCanvas({
@@ -38,6 +39,10 @@ export function AdvancedCanvas({
   onVariablesChange,
   showPreview,
   onShowPreviewToggle,
+  allVariables,
+  onVariablesPanelToggle,
+  isVariablesPanelOpen,
+  onDragHandlersReady,
 }: AdvancedCanvasProps) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
@@ -58,34 +63,18 @@ export function AdvancedCanvas({
     onBlockAdd: addBlockToCanvas,
   });
 
-  // Sensors for drag and drop
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  // Pass drag handlers to parent (only when handlers change)
+  useEffect(() => {
+    if (onDragHandlersReady) {
+      onDragHandlersReady(handlers);
+    }
+  }, [handlers, onDragHandlersReady]);
 
   // Droppable setup for canvas
   const { setNodeRef, isOver } = useDroppable({
     id: 'canvas-droppable',
   });
 
-  // Calculate all variables needed
-  const allVariables = useMemo(() => {
-    const variableSet = new Set<string>();
-    canvasBlocks
-      .filter(block => block.enabled)
-      .forEach(block => {
-        const blockVariables = extractVariables(block.content);
-        blockVariables.forEach(variable => variableSet.add(variable));
-      });
-    return Array.from(variableSet);
-  }, [canvasBlocks]);
 
   // Generate preview content
   const previewContent = useMemo(() => {
@@ -120,10 +109,6 @@ export function AdvancedCanvas({
     }
   }, [finalContent]);
 
-  // Variable change handler
-  const handleVariableChange = useCallback((variable: string, value: string) => {
-    onVariablesChange({ ...variables, [variable]: value });
-  }, [variables, onVariablesChange]);
 
   // Block action handlers
   const handleBlockSelect = useCallback((canvasId: string) => {
@@ -149,24 +134,19 @@ export function AdvancedCanvas({
   );
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handlers.onDragStart}
-      onDragOver={handlers.onDragOver}
-      onDragEnd={handlers.onDragEnd}
-    >
-      <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col">
         {/* Canvas Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-semibold">Prompt Builder</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">
+          <h2 className="text-xl font-semibold text-white">Prompt Builder</h2>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {/* TODO: Show variables modal */}}
+              onClick={onVariablesPanelToggle}
               className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
-                allVariables.length > 0
-                  ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                  : 'border-gray-300 bg-gray-50 text-gray-500 cursor-not-allowed'
+                isVariablesPanelOpen
+                  ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
+                  : allVariables.length > 0
+                  ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
+                  : 'border-gray-600 bg-gray-700 text-gray-400 cursor-not-allowed'
               }`}
               disabled={allVariables.length === 0}
             >
@@ -177,8 +157,8 @@ export function AdvancedCanvas({
               onClick={onShowPreviewToggle}
               className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
                 showPreview
-                  ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  ? 'border-green-500 bg-green-600 text-white hover:bg-green-700'
+                  : 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
               }`}
             >
               {showPreview ? 'Hide Preview' : 'Show Preview'}
@@ -189,8 +169,8 @@ export function AdvancedCanvas({
               disabled={canvasBlocks.filter(b => b.enabled).length === 0}
               className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
                 canvasBlocks.filter(b => b.enabled).length > 0
-                  ? 'border-blue-300 bg-blue-600 text-white hover:bg-blue-700'
-                  : 'border-gray-300 bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
+                  : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
               }`}
             >
               Copy Prompt
@@ -198,51 +178,29 @@ export function AdvancedCanvas({
           </div>
         </div>
 
-        {/* Variables Section */}
-        {allVariables.length > 0 && (
-          <div className="p-4 border-b bg-gray-50">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Variables</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {allVariables.map(variable => (
-                <div key={variable} className="flex items-center gap-2">
-                  <label className="text-sm text-gray-600 min-w-0 flex-shrink-0">
-                    {variable}:
-                  </label>
-                  <input
-                    type="text"
-                    value={variables[variable] || ''}
-                    onChange={(e) => handleVariableChange(variable, e.target.value)}
-                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={`Enter ${variable}...`}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Preview Section */}
         {showPreview && (
-          <div className="p-4 border-b bg-blue-50">
-            <h3 className="text-sm font-medium text-blue-700 mb-2">Preview</h3>
-            <div className="text-sm text-blue-900 whitespace-pre-wrap bg-white p-3 rounded border border-blue-200 max-h-40 overflow-y-auto">
+          <div className="p-4 border-b border-gray-700 bg-gray-800">
+            <h3 className="text-sm font-medium text-blue-300 mb-2">Preview</h3>
+            <div className="text-sm text-gray-200 whitespace-pre-wrap bg-gray-900 p-3 rounded border border-gray-600 max-h-40 overflow-y-auto">
               {previewContent || 'Add blocks to see preview...'}
             </div>
           </div>
         )}
 
         {/* Canvas Area */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4 bg-gray-900">
           <div
             ref={setNodeRef}
             className={`min-h-96 border-2 border-dashed rounded-lg transition-colors ${
               isOver && dragState.activeBlock
-                ? 'border-blue-400 bg-blue-50'
-                : 'border-gray-300 bg-gray-50'
+                ? 'border-blue-400 bg-blue-900/50'
+                : 'border-gray-600 bg-gray-800'
             }`}
           >
             {canvasBlocks.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500">
+              <div className="h-full flex flex-col items-center justify-center text-gray-400">
                 <div className="text-4xl mb-4">📋</div>
                 <div className="text-lg font-medium mb-2">Drag blocks here to build your prompt</div>
                 <div className="text-sm">Use the library on the right to add blocks</div>
@@ -270,38 +228,6 @@ export function AdvancedCanvas({
             )}
           </div>
         </div>
-      </div>
-
-      {/* Drag Overlay */}
-      <DragOverlay>
-        {dragState.activeBlock && (
-          <div className="opacity-75">
-            {dragState.activeId?.startsWith('block-') ? (
-              <BlockLibraryItem 
-                block={dragState.activeBlock as Block} 
-                isExpanded={false}
-                onToggleExpand={() => {}}
-                onEdit={() => {}}
-                onDuplicate={() => {}}
-                onDelete={() => {}}
-              />
-            ) : (
-              <CanvasBlockComponent
-                block={dragState.activeBlock as CanvasBlock}
-                isSelected={false}
-                isEditing={false}
-                onSelect={() => {}}
-                onEdit={() => {}}
-                onSave={() => {}}
-                onCancel={() => {}}
-                onToggleEnabled={() => {}}
-                onRemove={() => {}}
-                onDuplicate={() => {}}
-              />
-            )}
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+    </div>
   );
 }

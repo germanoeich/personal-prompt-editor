@@ -216,14 +216,14 @@ export function AdvancedBlockLibrary({
   }, [onBlockCreate]);
 
   return (
-    <div className="w-80 border-l bg-white flex flex-col">
+    <div className="w-80 border-l border-gray-700 bg-gray-800 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Block Library</h2>
+          <h2 className="text-xl font-semibold text-white">Block Library</h2>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            className="p-2 text-blue-400 hover:bg-gray-700 rounded-lg transition-colors"
             title="Create new block"
           >
             <PlusIcon className="w-5 h-5" />
@@ -238,7 +238,7 @@ export function AdvancedBlockLibrary({
             placeholder="Search blocks..."
             value={searchFilters.search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full pl-10 pr-4 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm placeholder-gray-400"
           />
         </div>
 
@@ -249,8 +249,8 @@ export function AdvancedBlockLibrary({
               onClick={() => handleTypeFilter(undefined)}
               className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                 !searchFilters.type
-                  ? 'bg-blue-100 text-blue-700 border-blue-300'
-                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  ? 'bg-blue-600 text-white border-blue-500'
+                  : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
               }`}
             >
               All
@@ -259,8 +259,8 @@ export function AdvancedBlockLibrary({
               onClick={() => handleTypeFilter('preset')}
               className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                 searchFilters.type === 'preset'
-                  ? 'bg-blue-100 text-blue-700 border-blue-300'
-                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  ? 'bg-blue-600 text-white border-blue-500'
+                  : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
               }`}
             >
               Preset
@@ -269,8 +269,8 @@ export function AdvancedBlockLibrary({
               onClick={() => handleTypeFilter('one-off')}
               className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                 searchFilters.type === 'one-off'
-                  ? 'bg-blue-100 text-blue-700 border-blue-300'
-                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  ? 'bg-blue-600 text-white border-blue-500'
+                  : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
               }`}
             >
               One-off
@@ -280,7 +280,7 @@ export function AdvancedBlockLibrary({
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`p-1 rounded transition-colors ${
-              showFilters ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:text-gray-600'
+              showFilters ? 'text-blue-400 bg-gray-700' : 'text-gray-400 hover:text-gray-300'
             }`}
             title="Toggle filters"
           >
@@ -290,11 +290,11 @@ export function AdvancedBlockLibrary({
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-3 pt-3 border-t space-y-3">
+          <div className="mt-3 pt-3 border-t border-gray-600 space-y-3">
             {/* Tags Filter */}
             {allTags.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
                   <TagIcon className="w-4 h-4 inline mr-1" />
                   Tags
                 </label>
@@ -305,8 +305,8 @@ export function AdvancedBlockLibrary({
                       onClick={() => handleTagToggle(tag)}
                       className={`px-2 py-1 text-xs rounded-full border transition-colors ${
                         selectedTags.includes(tag)
-                          ? 'bg-blue-100 text-blue-700 border-blue-300'
-                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                          ? 'bg-blue-600 text-white border-blue-500'
+                          : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
                       }`}
                     >
                       {tag}
@@ -319,7 +319,7 @@ export function AdvancedBlockLibrary({
             {/* Categories Filter */}
             {allCategories.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
                   <Squares2X2Icon className="w-4 h-4 inline mr-1" />
                   Categories
                 </label>
@@ -330,8 +330,8 @@ export function AdvancedBlockLibrary({
                       onClick={() => handleCategoryToggle(category)}
                       className={`px-2 py-1 text-xs rounded-full border transition-colors ${
                         selectedCategories.includes(category)
-                          ? 'bg-green-100 text-green-700 border-green-300'
-                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                          ? 'bg-green-600 text-white border-green-500'
+                          : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
                       }`}
                     >
                       {category}
@@ -345,7 +345,7 @@ export function AdvancedBlockLibrary({
             {(selectedTags.length > 0 || selectedCategories.length > 0 || searchFilters.search || searchFilters.type) && (
               <button
                 onClick={handleClearFilters}
-                className="w-full px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="w-full px-3 py-2 text-sm text-gray-300 border border-gray-600 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
               >
                 Clear All Filters
               </button>
@@ -358,11 +358,11 @@ export function AdvancedBlockLibrary({
       <div
         ref={setNodeRef}
         className={`transition-colors ${
-          isOver ? 'bg-red-50 border-red-200' : ''
+          isOver ? 'bg-red-900/50 border-red-700' : ''
         }`}
       >
         {isOver && (
-          <div className="p-3 text-center text-red-600 text-sm border-b border-red-200">
+          <div className="p-3 text-center text-red-400 text-sm border-b border-red-700">
             Drop here to remove from canvas
           </div>
         )}
@@ -371,22 +371,22 @@ export function AdvancedBlockLibrary({
       {/* Blocks List */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center text-gray-400">
             Loading blocks...
           </div>
         ) : error ? (
-          <div className="p-4 text-center text-red-600">
+          <div className="p-4 text-center text-red-400">
             <p className="mb-2">Error loading blocks:</p>
             <p className="text-sm">{error}</p>
             <button
               onClick={onRefresh}
-              className="mt-2 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+              className="mt-2 px-3 py-1 text-sm bg-red-900/50 text-red-400 rounded hover:bg-red-900/70 transition-colors"
             >
               Retry
             </button>
           </div>
         ) : sortedBlocks.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center text-gray-400">
             <div className="mb-2">No blocks found</div>
             <div className="text-sm">
               {searchFilters.search || selectedTags.length > 0 || selectedCategories.length > 0
@@ -413,7 +413,7 @@ export function AdvancedBlockLibrary({
       </div>
 
       {/* Results Summary */}
-      <div className="p-3 border-t bg-gray-50 text-sm text-gray-600">
+      <div className="p-3 border-t border-gray-700 bg-gray-800 text-sm text-gray-400">
         {isLoading ? (
           'Loading...'
         ) : (

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { dbManager } from '@/lib/database';
+import { extractVariables } from '@/lib/variables';
 
 export async function POST() {
   try {
@@ -100,7 +101,12 @@ export async function POST() {
     ];
 
     for (const block of presetBlocks) {
-      dbManager.createBlock(block);
+      // Extract variables from content
+      const variables = extractVariables(block.content);
+      dbManager.createBlock({
+        ...block,
+        variables
+      });
     }
 
     // Create sample prompts

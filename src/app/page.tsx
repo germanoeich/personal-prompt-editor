@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { CanvasBlock, Block, Prompt } from '@/types';
 import { AdvancedCanvas } from '@/components/AdvancedCanvas';
 import { AdvancedBlockLibrary } from '@/components/AdvancedBlockLibrary';
+import { VariablesPanel } from '@/components/VariablesPanel';
+import { extractVariables } from '@/lib/variables';
 
 export default function Home() {
   // Core state
@@ -11,6 +15,10 @@ export default function Home() {
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
+  
+  // Variables panel state
+  const [isVariablesPanelOpen, setIsVariablesPanelOpen] = useState(false);
+  const [variablesPanelWidth, setVariablesPanelWidth] = useState(300);
 
   // Block library state
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -169,26 +177,85 @@ export default function Home() {
     }
   }, [canvasBlocks, variables]);
 
+  // Calculate all variables needed
+  const allVariables = useMemo(() => {
+    const variableSet = new Set<string>();
+    canvasBlocks
+      .filter(block => block.enabled)
+      .forEach(block => {
+        const blockVariables = extractVariables(block.content);
+        blockVariables.forEach(variable => variableSet.add(variable));
+      });
+    return Array.from(variableSet);
+  }, [canvasBlocks]);
+
   // Variable management
   const handleVariablesChange = useCallback((newVariables: Record<string, string>) => {
     setVariables(newVariables);
+  }, []);
+
+  const handleVariableChange = useCallback((variable: string, value: string) => {
+    setVariables(prev => ({ ...prev, [variable]: value }));
   }, []);
 
   const handleShowPreviewToggle = useCallback(() => {
     setShowPreview(prev => !prev);
   }, []);
 
+  const handleVariablesPanelToggle = useCallback(() => {
+    setIsVariablesPanelOpen(prev => !prev);
+  }, []);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Drag and drop handlers from AdvancedCanvas
+  const [dragHandlers, setDragHandlers] = useState<{
+    onDragStart: (event: any) => void;
+    onDragOver: (event: any) => void;
+    onDragEnd: (event: any) => void;
+  } | null>(null);
+
+  const handleDragHandlersReady = useCallback((handlers: {
+    onDragStart: (event: any) => void;
+    onDragOver: (event: any) => void;
+    onDragEnd: (event: any) => void;
+  }) => {
+    setDragHandlers(handlers);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="px-6 py-4">
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={dragHandlers?.onDragStart}
+      onDragOver={dragHandlers?.onDragOver}
+      onDragEnd={dragHandlers?.onDragEnd}
+    >
+      <div className="min-h-screen bg-gray-900">
+        {/* Header */}
+        <header className="bg-gray-800 border-b border-gray-700 shadow-sm">
+        <div 
+          className="px-6 py-4 transition-all duration-200"
+          style={{ 
+            marginLeft: isVariablesPanelOpen ? `${variablesPanelWidth}px` : '0px'
+          }}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-white">
                 Visual Prompt Builder
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Build, organize, and version your LLM prompts
               </p>
             </div>
@@ -196,8 +263,8 @@ export default function Home() {
             {/* Header Actions */}
             <div className="flex items-center gap-3">
               {currentPrompt && (
-                <div className="text-sm text-gray-600">
-                  Current: <span className="font-medium">{currentPrompt.title}</span>
+                <div className="text-sm text-gray-400">
+                  Current: <span className="font-medium text-white">{currentPrompt.title}</span>
                 </div>
               )}
               
@@ -211,8 +278,8 @@ export default function Home() {
                 disabled={canvasBlocks.length === 0}
                 className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
                   canvasBlocks.length > 0
-                    ? 'border-blue-300 bg-blue-600 text-white hover:bg-blue-700'
-                    : 'border-gray-300 bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
+                    : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
                 }`}
               >
                 Save Prompt
@@ -223,7 +290,7 @@ export default function Home() {
                   // TODO: Open prompt library modal
                   console.log('Open prompt library');
                 }}
-                className="px-4 py-2 text-sm border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm border border-gray-600 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors"
               >
                 Load Prompt
               </button>
@@ -233,7 +300,12 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="flex h-[calc(100vh-88px)]">
+      <main 
+        className="flex h-[calc(100vh-88px)] transition-all duration-200"
+        style={{ 
+          marginLeft: isVariablesPanelOpen ? `${variablesPanelWidth}px` : '0px'
+        }}
+      >
         {/* Canvas Area */}
         <AdvancedCanvas
           canvasBlocks={canvasBlocks}
@@ -242,6 +314,10 @@ export default function Home() {
           onVariablesChange={handleVariablesChange}
           showPreview={showPreview}
           onShowPreviewToggle={handleShowPreviewToggle}
+          allVariables={allVariables}
+          onVariablesPanelToggle={handleVariablesPanelToggle}
+          isVariablesPanelOpen={isVariablesPanelOpen}
+          onDragHandlersReady={handleDragHandlersReady}
         />
 
         {/* Block Library */}
@@ -256,8 +332,24 @@ export default function Home() {
         />
       </main>
 
+      {/* Variables Panel */}
+      <VariablesPanel
+        variables={variables}
+        allVariables={allVariables}
+        onVariableChange={handleVariableChange}
+        isOpen={isVariablesPanelOpen}
+        onToggle={handleVariablesPanelToggle}
+        width={variablesPanelWidth}
+        onWidthChange={setVariablesPanelWidth}
+      />
+
       {/* Status Bar */}
-      <div className="bg-white border-t px-6 py-2 text-sm text-gray-600">
+      <div 
+        className="bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 transition-all duration-200"
+        style={{ 
+          marginLeft: isVariablesPanelOpen ? `${variablesPanelWidth}px` : '0px'
+        }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span>
@@ -288,6 +380,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </DndContext>
   );
 }

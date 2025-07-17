@@ -86,9 +86,9 @@ export function BlockLibraryItem({
       ref={setNodeRef}
       style={style}
       className={`
-        group border rounded-lg bg-white shadow-sm transition-all duration-200
+        group border rounded-lg bg-gray-800 shadow-sm transition-all duration-200
         ${isDragging ? 'shadow-lg cursor-grabbing' : 'cursor-grab hover:shadow-md'}
-        ${isExpanded ? 'border-blue-200' : 'border-gray-200'}
+        ${isExpanded ? 'border-blue-600' : 'border-gray-600'}
       `}
       {...attributes}
       {...listeners}
@@ -102,7 +102,7 @@ export function BlockLibraryItem({
                 e.stopPropagation();
                 onToggleExpand();
               }}
-              className="flex-shrink-0 p-0.5 mr-2 mt-0.5 text-gray-400 hover:text-gray-600 transition-colors"
+              className="flex-shrink-0 p-0.5 mr-2 mt-0.5 text-gray-500 hover:text-gray-300 transition-colors"
             >
               {isExpanded ? (
                 <ChevronDownIcon className="w-4 h-4" />
@@ -118,12 +118,12 @@ export function BlockLibraryItem({
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="w-full font-medium bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none pb-1"
+                  className="w-full font-medium bg-transparent text-white border-b border-gray-600 focus:border-blue-400 focus:outline-none pb-1"
                   placeholder="Block title..."
                   autoFocus
                 />
               ) : (
-                <h3 className="font-medium text-gray-900 truncate">
+                <h3 className="font-medium text-white truncate">
                   {block.title}
                 </h3>
               )}
@@ -139,7 +139,7 @@ export function BlockLibraryItem({
                     e.stopPropagation();
                     handleSave();
                   }}
-                  className="p-1 text-green-600 hover:bg-green-50 rounded text-xs"
+                  className="p-1 text-green-400 hover:bg-green-900/20 rounded text-xs"
                   title="Save"
                 >
                   ✓
@@ -149,7 +149,7 @@ export function BlockLibraryItem({
                     e.stopPropagation();
                     handleCancel();
                   }}
-                  className="p-1 text-gray-600 hover:bg-gray-50 rounded text-xs"
+                  className="p-1 text-gray-300 hover:bg-gray-700 rounded text-xs"
                   title="Cancel"
                 >
                   ✕
@@ -162,7 +162,7 @@ export function BlockLibraryItem({
                     e.stopPropagation();
                     setIsEditing(true);
                   }}
-                  className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                  className="p-1 text-blue-400 hover:bg-blue-900/20 rounded"
                   title="Edit"
                 >
                   <PencilIcon className="w-3 h-3" />
@@ -172,7 +172,7 @@ export function BlockLibraryItem({
                     e.stopPropagation();
                     onDuplicate();
                   }}
-                  className="p-1 text-gray-600 hover:bg-gray-50 rounded"
+                  className="p-1 text-gray-300 hover:bg-gray-700 rounded"
                   title="Duplicate"
                 >
                   <DocumentDuplicateIcon className="w-3 h-3" />
@@ -182,7 +182,7 @@ export function BlockLibraryItem({
                     e.stopPropagation();
                     onDelete();
                   }}
-                  className="p-1 text-red-600 hover:bg-red-50 rounded"
+                  className="p-1 text-red-400 hover:bg-red-900/20 rounded"
                   title="Delete"
                 >
                   <TrashIcon className="w-3 h-3" />
@@ -196,20 +196,20 @@ export function BlockLibraryItem({
         <div className="flex items-center gap-2 mt-2 ml-6">
           <span className={`px-2 py-0.5 text-xs rounded-full ${
             block.type === 'preset' 
-              ? 'bg-blue-100 text-blue-700' 
-              : 'bg-gray-100 text-gray-700'
+              ? 'bg-blue-900/30 text-blue-300' 
+              : 'bg-gray-700 text-gray-300'
           }`}>
             {block.type}
           </span>
           
           {block.variables.length > 0 && (
-            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+            <span className="px-2 py-0.5 text-xs bg-green-900/30 text-green-300 rounded-full">
               {block.variables.length} var{block.variables.length !== 1 ? 's' : ''}
             </span>
           )}
 
           {block.usage_count > 0 && (
-            <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
+            <span className="px-2 py-0.5 text-xs bg-purple-900/30 text-purple-300 rounded-full">
               Used {block.usage_count}×
             </span>
           )}
