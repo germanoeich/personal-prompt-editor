@@ -25,7 +25,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
-    type TEXT NOT NULL CHECK (type IN ('preset', 'one-off')),
+    type TEXT NOT NULL CHECK (type IN ('preset')),
     tags TEXT DEFAULT '', -- JSON array of tags
     categories TEXT DEFAULT '', -- JSON array of categories
     variables TEXT DEFAULT '', -- JSON array of extracted variables
@@ -53,7 +53,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     content_snapshot TEXT NOT NULL, -- Full rendered prompt text
-    block_composition TEXT NOT NULL, -- JSON structure of blocks used
+    content_text TEXT NOT NULL, -- Text-based format for storage
     tags TEXT DEFAULT '', -- JSON array of tags
     categories TEXT DEFAULT '', -- JSON array of categories
     variables TEXT DEFAULT '', -- JSON object of variable values
@@ -69,7 +69,7 @@ db.exec(`
     version_number INTEGER NOT NULL,
     title TEXT NOT NULL,
     content_snapshot TEXT NOT NULL,
-    block_composition TEXT NOT NULL,
+    content_text TEXT NOT NULL, -- Text-based format for storage
     variables TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (prompt_id) REFERENCES prompts(id) ON DELETE CASCADE,
@@ -170,7 +170,7 @@ export class DatabaseManager {
   createBlock(data: {
     title: string;
     content: string;
-    type: 'preset' | 'one-off';
+    type: 'preset';
     tags?: string[];
     categories?: string[];
     variables?: string[];
@@ -300,20 +300,20 @@ export class DatabaseManager {
   createPrompt(data: {
     title: string;
     contentSnapshot: string;
-    blockComposition: any[];
+    contentText: string;
     tags?: string[];
     categories?: string[];
     variables?: Record<string, string>;
   }) {
     const stmt = this.db.prepare(`
-      INSERT INTO prompts (title, content_snapshot, block_composition, tags, categories, variables)
+      INSERT INTO prompts (title, content_snapshot, content_text, tags, categories, variables)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
     
     const result = stmt.run(
       data.title,
       data.contentSnapshot,
-      JSON.stringify(data.blockComposition),
+      data.contentText,
       JSON.stringify(data.tags || []),
       JSON.stringify(data.categories || []),
       JSON.stringify(data.variables || {})
@@ -328,7 +328,7 @@ export class DatabaseManager {
   updatePrompt(id: number, data: Partial<{
     title: string;
     contentSnapshot: string;
-    blockComposition: any[];
+    contentText: string;
     tags: string[];
     categories: string[];
     variables: Record<string, string>;
@@ -341,15 +341,16 @@ export class DatabaseManager {
       // Increment version
       const newVersion = (currentPrompt as any).current_version + 1;
 
-      // Update prompt
-      const updates = Object.keys(data).map(key => 
-        ['blockComposition', 'tags', 'categories', 'variables'].includes(key) 
-          ? `${key === 'blockComposition' ? 'block_composition' : key} = ?` 
-          : `${key === 'contentSnapshot' ? 'content_snapshot' : key} = ?`
-      ).join(', ');
+      // Update prompt - handle field name mapping
+      const updates = Object.keys(data).map(key => {
+        if (key === 'contentSnapshot') return 'content_snapshot = ?';
+        if (key === 'contentText') return 'content_text = ?';
+        if (['tags', 'categories', 'variables'].includes(key)) return `${key} = ?`;
+        return `${key} = ?`;
+      }).join(', ');
       
       const values = Object.entries(data).map(([key, value]) => 
-        ['blockComposition', 'tags', 'categories', 'variables'].includes(key) 
+        ['tags', 'categories', 'variables'].includes(key) 
           ? JSON.stringify(value) 
           : value
       );
@@ -377,7 +378,7 @@ export class DatabaseManager {
   // Prompt Versions
   createPromptVersion(promptId: number, versionNumber: number, data: any) {
     const stmt = this.db.prepare(`
-      INSERT INTO prompt_versions (prompt_id, version_number, title, content_snapshot, block_composition, variables)
+      INSERT INTO prompt_versions (prompt_id, version_number, title, content_snapshot, content_text, variables)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
@@ -385,7 +386,7 @@ export class DatabaseManager {
       versionNumber,
       data.title,
       data.contentSnapshot || data.content_snapshot,
-      JSON.stringify(data.blockComposition || JSON.parse(data.block_composition || '[]')),
+      data.contentText || data.content_text,
       JSON.stringify(data.variables || JSON.parse(data.variables || '{}'))
     );
   }

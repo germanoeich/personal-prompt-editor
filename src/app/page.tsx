@@ -251,6 +251,39 @@ export default function Home() {
     }
   }, [currentPrompt, loadPrompts]);
 
+  // Title change functionality
+  const handleTitleChange = useCallback(async (newTitle: string) => {
+    if (!currentPrompt) {
+      console.error('No current prompt to update title');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/prompts/${currentPrompt.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newTitle,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update prompt title: ${response.statusText}`);
+      }
+
+      const updatedPrompt = await response.json();
+      setCurrentPrompt(updatedPrompt);
+      
+      // Refresh prompts list to show updated title
+      loadPrompts();
+      
+      console.log('Prompt title updated successfully');
+    } catch (error) {
+      console.error('Error updating prompt title:', error);
+      alert('Failed to update prompt title: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  }, [currentPrompt, loadPrompts]);
+
   // Calculate all variables needed
   const allVariables = useMemo(() => {
     const variableSet = new Set<string>();
@@ -451,6 +484,8 @@ export default function Home() {
           allVariables={allVariables}
           blocks={blocks}
           isLoading={isLoadingPrompt}
+          currentPrompt={currentPrompt}
+          onTitleChange={handleTitleChange}
         />
 
         {/* Block Library */}

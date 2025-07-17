@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbManager } from '@/lib/database';
 import { replaceVariables } from '@/lib/variables';
+import { parseTextToPromptContent, generateContentSnapshot } from '@/lib/prompt-conversion';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,10 +15,10 @@ export async function GET(request: NextRequest) {
     // Parse JSON fields for response
     const parsedPrompts = prompts.map((prompt: any) => ({
       ...prompt,
-      blockComposition: JSON.parse(prompt.block_composition || '[]'),
       tags: JSON.parse(prompt.tags || '[]'),
       categories: JSON.parse(prompt.categories || '[]'),
-      variables: JSON.parse(prompt.variables || '{}')
+      variables: JSON.parse(prompt.variables || '{}'),
+      contentText: prompt.content_text
     }));
 
     return NextResponse.json(parsedPrompts);
@@ -31,39 +32,21 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     
-    if (!data.title || !data.blockComposition) {
+    if (!data.title || !data.contentText) {
       return NextResponse.json(
-        { error: 'Title and block composition are required' },
+        { error: 'Title and contentText are required' },
         { status: 400 }
       );
     }
 
-    if (!Array.isArray(data.blockComposition)) {
-      return NextResponse.json(
-        { error: 'Block composition must be an array' },
-        { status: 400 }
-      );
-    }
-
-    // Generate content snapshot by combining enabled blocks
-    let contentSnapshot = '';
-    const enabledBlocks = data.blockComposition.filter((block: any) => block.enabled !== false);
-    
-    for (const blockData of enabledBlocks) {
-      if (blockData.content) {
-        contentSnapshot += blockData.content + '\n\n';
-      }
-    }
-
-    // Apply variable replacements if provided
-    if (data.variables && typeof data.variables === 'object') {
-      contentSnapshot = replaceVariables(contentSnapshot, data.variables);
-    }
+    // Parse the content text to generate a content snapshot
+    const promptContent = parseTextToPromptContent(data.contentText);
+    const contentSnapshot = generateContentSnapshot(promptContent, data.variables || {});
 
     const promptData = {
       title: data.title,
       contentSnapshot: contentSnapshot.trim(),
-      blockComposition: data.blockComposition,
+      contentText: data.contentText,
       tags: Array.isArray(data.tags) ? data.tags : [],
       categories: Array.isArray(data.categories) ? data.categories : [],
       variables: data.variables || {}
@@ -71,11 +54,15 @@ export async function POST(request: NextRequest) {
 
     const result = dbManager.createPrompt(promptData);
     
-    // Increment usage count for any preset blocks used
-    data.blockComposition.forEach((block: any) => {
-      if (block.id && block.type === 'preset') {
-        dbManager.incrementBlockUsage(block.id);
-      }
+    // Increment usage count for any preset blocks used in the content
+    const blockMatches = data.contentText.match(/<block\s+id="?(\d+)"?\s*\/?>/g) || [];
+    const blockIds = blockMatches.map((match: string) => {
+      const idMatch = match.match(/id="?(\d+)"?/);
+      return idMatch ? parseInt(idMatch[1]) : null;
+    }).filter(Boolean);
+    
+    blockIds.forEach((blockId: number) => {
+      dbManager.incrementBlockUsage(blockId);
     });
     
     // Fetch the created prompt with parsed JSON fields
@@ -86,10 +73,10 @@ export async function POST(request: NextRequest) {
     
     const parsedPrompt = {
       ...createdPrompt,
-      blockComposition: JSON.parse((createdPrompt as any).block_composition || '[]'),
       tags: JSON.parse((createdPrompt as any).tags || '[]'),
       categories: JSON.parse((createdPrompt as any).categories || '[]'),
-      variables: JSON.parse((createdPrompt as any).variables || '{}')
+      variables: JSON.parse((createdPrompt as any).variables || '{}'),
+      contentText: (createdPrompt as any).content_text
     };
 
     return NextResponse.json(parsedPrompt, { status: 201 });

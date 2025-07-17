@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { 
   PlusIcon,
@@ -14,7 +14,8 @@ import {
   PromptElement, 
   PromptTextElement, 
   PromptBlockElement, 
-  Block 
+  Block,
+  Prompt
 } from '@/types';
 import { extractVariables, replaceVariables } from '@/lib/variables';
 import { generateElementId } from '@/lib/utils';
@@ -33,6 +34,8 @@ interface TextEditorCanvasProps {
   allVariables: string[];
   blocks: Block[];
   isLoading?: boolean;
+  currentPrompt?: Prompt | null;
+  onTitleChange?: (title: string) => void;
 }
 
 export function TextEditorCanvas({
@@ -45,14 +48,27 @@ export function TextEditorCanvas({
   allVariables,
   blocks,
   isLoading = false,
+  currentPrompt,
+  onTitleChange,
 }: TextEditorCanvasProps) {
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
   const [focusedElementId, setFocusedElementId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Sync title value with current prompt
+  useEffect(() => {
+    if (currentPrompt) {
+      setTitleValue(currentPrompt.title);
+    } else {
+      setTitleValue('');
+    }
+  }, [currentPrompt]);
 
   // Droppable setup for text editor
   const { setNodeRef, isOver } = useDroppable({
@@ -274,6 +290,31 @@ export function TextEditorCanvas({
     addBlockElement(block, afterElementId);
   }, [addBlockElement]);
 
+  // Title editing handlers
+  const handleTitleClick = useCallback(() => {
+    setIsEditingTitle(true);
+  }, []);
+
+  const handleTitleSave = useCallback(() => {
+    if (onTitleChange && titleValue.trim()) {
+      onTitleChange(titleValue.trim());
+    }
+    setIsEditingTitle(false);
+  }, [onTitleChange, titleValue]);
+
+  const handleTitleCancel = useCallback(() => {
+    setTitleValue(currentPrompt?.title || '');
+    setIsEditingTitle(false);
+  }, [currentPrompt]);
+
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      handleTitleCancel();
+    }
+  }, [handleTitleSave, handleTitleCancel]);
 
   const sortedContent = useMemo(() => 
     [...promptContent].sort((a, b) => a.order - b.order),
@@ -293,8 +334,50 @@ export function TextEditorCanvas({
       )}
       
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0">
-        <h2 className="text-xl font-semibold text-white">Prompt Builder</h2>
+      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0 group">
+        <div className="flex items-center gap-2">
+          {isEditingTitle ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={handleTitleSave}
+                className="text-xl font-semibold text-white bg-gray-700 border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+                placeholder="Enter prompt title..."
+              />
+              <button
+                onClick={handleTitleSave}
+                className="p-1 text-green-400 hover:text-green-300 transition-colors"
+                title="Save title"
+              >
+                <CheckIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleTitleCancel}
+                className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                title="Cancel editing"
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-white">
+                {currentPrompt?.title || 'Untitled Prompt'}
+              </h2>
+              <button
+                onClick={handleTitleClick}
+                className="p-1 text-gray-400 hover:text-gray-300 transition-colors opacity-0 group-hover:opacity-100"
+                title="Edit title"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <button
             onClick={onShowPreviewToggle}

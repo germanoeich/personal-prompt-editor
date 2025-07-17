@@ -4,31 +4,38 @@ Let's assume that:
 block with id = 1 is a preset block that defines the tone of the LLM, with the following prompt: Be direct, concise, keep your replies short and objetive.
 block with id = 12 is a block that tells the model to output in some json format
 ```
-<block id=1 />
+<block id="1" />
 
-Please look for any grammar mistakes in this text:
+<text>Please look for any grammar mistakes in this text:</text>
 
-// Here would be some text for the LLM to analyze (not a preset)
+<text>Here would be some text for the LLM to analyze (not a preset)</text>
 
-<block id=12 />
+<block id="12" />
 ```
 
 In the UI, I expect it to look like
 
 [Tone preset block] - Displays the block content, name, etc 
-[One off block] - Text content (Please look for any grammar mistakes in this text:)
+[Text block] - Text content (Please look for any grammar mistakes in this text:)
+[Text block] - Text content (Here would be some text for the LLM to analyze)
 [Output preset block] - Output block
-(+ icon to add a new one off block)
+(+ icon to add a new text block)
 
 
-One of blocks are not persisted block entities, its part of the prompt. We'll only render it as a block to keep consistency, nothing more.
+Text blocks are not persisted block entities, they're part of the prompt. We render them as blocks to keep consistency, nothing more.
 
 All blocks are editable inline, including preset ones. We'll use a override system, where we keep the reference to the original block, but override the content:
 
 ```
-<block id=1>This is a prompt override, we can also use {{originalText}} to append the original block text to our override</block>
+<block id="1">This is a prompt override, we can also use {{originalText}} to append the original block text to our override</block>
 
-Some more text
+<text>Some more text</text>
 ```
 
-In this instance, we would see a clear indication that the block is being overriding and show a reset and a save button for the preset.
+In this instance, we would see a clear indication that the block is being overridden and show a reset and a save button for the preset.
+
+Content Escaping:
+- All text content within <text> and <block> tags is escaped to prevent conflicts
+- < becomes &lt;, > becomes &gt;, & becomes &amp;
+- This ensures content containing "<block>" or "<text>" strings won't be parsed as actual tags
+- Example: <text>This text contains &lt;block id="123" /&gt; tags</text>

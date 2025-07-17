@@ -101,7 +101,7 @@ export default function Block({
               </button>
             )}
             
-            {onDelete && block.type === 'one-off' && (
+            {onDelete && (
               <button
                 onClick={() => onDelete(block.id)}
                 className="p-1 text-gray-400 hover:text-red-600 rounded"

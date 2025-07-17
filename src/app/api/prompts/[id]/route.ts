@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { simpleDb } from '@/lib/simple-db';
+import { dbManager } from '@/lib/database';
+import { parseTextToPromptContent, generateContentSnapshot } from '@/lib/prompt-conversion';
 
 export async function GET(
   request: NextRequest,
@@ -7,17 +8,108 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const prompt = simpleDb.prompts.findById(id);
+    const prompt = dbManager.getPrompt(parseInt(id));
     
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });
     }
     
-    return NextResponse.json({ prompt }, { status: 200 });
+    // Parse JSON fields for response
+    const parsedPrompt = {
+      ...prompt,
+      tags: JSON.parse((prompt as any).tags || '[]'),
+      categories: JSON.parse((prompt as any).categories || '[]'),
+      variables: JSON.parse((prompt as any).variables || '{}'),
+      contentText: (prompt as any).content_text
+    };
+    
+    return NextResponse.json(parsedPrompt, { status: 200 });
   } catch (error) {
     console.error('Error fetching prompt:', error);
     return NextResponse.json({ error: 'Failed to fetch prompt' }, { status: 500 });
   }
 }
 
-// PUT and DELETE endpoints can be implemented later if needed
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const data = await request.json();
+    
+    if (!data.title && !data.contentText && !data.tags && !data.categories && !data.variables) {
+      return NextResponse.json(
+        { error: 'At least one field is required to update' },
+        { status: 400 }
+      );
+    }
+
+    const updateData: any = {};
+    
+    if (data.title) updateData.title = data.title;
+    if (data.tags) updateData.tags = Array.isArray(data.tags) ? data.tags : [];
+    if (data.categories) updateData.categories = Array.isArray(data.categories) ? data.categories : [];
+    if (data.variables) updateData.variables = data.variables;
+
+    if (data.contentText) {
+      // Parse the content text to generate a content snapshot
+      const promptContent = parseTextToPromptContent(data.contentText);
+      const contentSnapshot = generateContentSnapshot(promptContent, data.variables || {});
+      
+      updateData.contentText = data.contentText;
+      updateData.contentSnapshot = contentSnapshot.trim();
+      
+      // Increment usage count for any preset blocks used in the content
+      const blockMatches = data.contentText.match(/<block\s+id="?(\d+)"?\s*\/?>/g) || [];
+      const blockIds = blockMatches.map((match: string) => {
+        const idMatch = match.match(/id="?(\d+)"?/);
+        return idMatch ? parseInt(idMatch[1]) : null;
+      }).filter(Boolean);
+      
+      blockIds.forEach((blockId: number) => {
+        dbManager.incrementBlockUsage(blockId);
+      });
+    }
+
+    const result = dbManager.updatePrompt(parseInt(id), updateData);
+    
+    // Fetch the updated prompt with parsed JSON fields
+    const updatedPrompt = dbManager.getPrompt(parseInt(id));
+    if (!updatedPrompt) {
+      return NextResponse.json({ error: 'Prompt not found after update' }, { status: 500 });
+    }
+    
+    const parsedPrompt = {
+      ...updatedPrompt,
+      tags: JSON.parse((updatedPrompt as any).tags || '[]'),
+      categories: JSON.parse((updatedPrompt as any).categories || '[]'),
+      variables: JSON.parse((updatedPrompt as any).variables || '{}'),
+      contentText: (updatedPrompt as any).content_text
+    };
+
+    return NextResponse.json(parsedPrompt, { status: 200 });
+  } catch (error) {
+    console.error('Error updating prompt:', error);
+    return NextResponse.json({ error: 'Failed to update prompt' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const result = dbManager.deletePrompt(parseInt(id));
+    
+    if (result.changes === 0) {
+      return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ message: 'Prompt deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting prompt:', error);
+    return NextResponse.json({ error: 'Failed to delete prompt' }, { status: 500 });
+  }
+}

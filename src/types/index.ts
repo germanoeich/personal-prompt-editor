@@ -27,7 +27,7 @@ export interface Prompt {
   id: number;
   title: string;
   content_snapshot: string;
-  block_composition: CanvasBlock[];
+  content_text: string; // Text-based format for storage
   tags: string[];
   categories: string[];
   variables: Record<string, string>;
@@ -42,7 +42,7 @@ export interface PromptVersion {
   version_number: number;
   title: string;
   content_snapshot: string;
-  block_composition: CanvasBlock[];
+  content_text: string; // Text-based format for storage
   variables: Record<string, string>;
   created_at: string;
 }
@@ -70,7 +70,7 @@ export interface Rating {
   updated_at: string;
 }
 
-// UI-specific types
+// UI-specific types (legacy - no longer used)
 export interface CanvasBlock extends Block {
   enabled: boolean;
   canvasId: string;
@@ -147,7 +147,7 @@ export interface SortOption {
   label: string;
 }
 
-// UI state types
+// UI state types (legacy - no longer used)
 export interface AppState {
   canvasBlocks: CanvasBlock[];
   selectedBlock: CanvasBlock | null;
@@ -199,7 +199,7 @@ export interface UpdateBlockRequest {
 
 export interface CreatePromptRequest {
   title: string;
-  blockComposition: CanvasBlock[];
+  contentText: string; // Text-based format
   tags?: string[];
   categories?: string[];
   variables?: Record<string, string>;
@@ -207,7 +207,7 @@ export interface CreatePromptRequest {
 
 export interface UpdatePromptRequest {
   title?: string;
-  blockComposition?: CanvasBlock[];
+  contentText?: string; // Text-based format
   tags?: string[];
   categories?: string[];
   variables?: Record<string, string>;
