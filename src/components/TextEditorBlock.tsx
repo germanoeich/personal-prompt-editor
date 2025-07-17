@@ -87,71 +87,6 @@ export function TextEditorBlock({
         ? 'border-orange-500 bg-orange-900/10' 
         : 'border-blue-500 bg-blue-900/10'
     }`}>
-      {/* Action Bar */}
-      <div className="absolute top-16 right-2 flex items-center gap-1 z-10">
-        {!isEditing && (
-          <>
-            <button
-              onClick={onEdit}
-              className="p-1 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-            >
-              <PencilIcon className="w-3 h-3" />
-            </button>
-            
-            {element.isOverridden && (
-              <button
-                onClick={onReset}
-                className="p-1 text-gray-400 hover:text-orange-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              >
-                <ArrowPathIcon className="w-3 h-3" />
-              </button>
-            )}
-            
-            {onMoveUp && (
-              <button
-                onClick={onMoveUp}
-                className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              >
-                <ChevronUpIcon className="w-3 h-3" />
-              </button>
-            )}
-            
-            {onMoveDown && (
-              <button
-                onClick={onMoveDown}
-                className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              >
-                <ChevronDownIcon className="w-3 h-3" />
-              </button>
-            )}
-            
-            <button
-              onClick={onDelete}
-              className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-            >
-              <TrashIcon className="w-3 h-3" />
-            </button>
-          </>
-        )}
-        
-        {isEditing && (
-          <>
-            <button
-              onClick={handleSave}
-              className="p-1 text-green-400 hover:text-green-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-            >
-              <CheckIcon className="w-3 h-3" />
-            </button>
-            
-            <button
-              onClick={onCancel}
-              className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-            >
-              <XMarkIcon className="w-3 h-3" />
-            </button>
-          </>
-        )}
-      </div>
 
       {/* Header */}
       <div className={`px-4 py-2 border-b ${
@@ -178,25 +113,93 @@ export function TextEditorBlock({
             )}
           </div>
           
-          {/* Variables */}
-          {variables.length > 0 && (
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-400">Variables:</span>
-              <div className="flex gap-1">
-                {variables.slice(0, 3).map((variable, index) => (
-                  <span
-                    key={index}
-                    className="px-1.5 py-0.5 text-xs bg-green-900/30 text-green-300 rounded"
-                  >
-                    {variable}
-                  </span>
-                ))}
-                {variables.length > 3 && (
-                  <span className="text-xs text-gray-400">+{variables.length - 3}</span>
-                )}
+          <div className="flex items-center gap-2">
+            {/* Variables */}
+            {variables.length > 0 && (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400">Variables:</span>
+                <div className="flex gap-1">
+                  {variables.slice(0, 3).map((variable, index) => (
+                    <span
+                      key={index}
+                      className="px-1.5 py-0.5 text-xs bg-green-900/30 text-green-300 rounded"
+                    >
+                      {variable}
+                    </span>
+                  ))}
+                  {variables.length > 3 && (
+                    <span className="text-xs text-gray-400">+{variables.length - 3}</span>
+                  )}
+                </div>
               </div>
+            )}
+            
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1">
+              {!isEditing && (
+                <>
+                  <button
+                    onClick={onEdit}
+                    className="p-1 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                  >
+                    <PencilIcon className="w-3 h-3" />
+                  </button>
+                  
+                  {element.isOverridden && (
+                    <button
+                      onClick={onReset}
+                      className="p-1 text-gray-400 hover:text-orange-400 hover:bg-gray-700 rounded transition-colors"
+                    >
+                      <ArrowPathIcon className="w-3 h-3" />
+                    </button>
+                  )}
+                  
+                  {onMoveUp && (
+                    <button
+                      onClick={onMoveUp}
+                      className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors"
+                    >
+                      <ChevronUpIcon className="w-3 h-3" />
+                    </button>
+                  )}
+                  
+                  {onMoveDown && (
+                    <button
+                      onClick={onMoveDown}
+                      className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors"
+                    >
+                      <ChevronDownIcon className="w-3 h-3" />
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={onDelete}
+                    className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                  >
+                    <TrashIcon className="w-3 h-3" />
+                  </button>
+                </>
+              )}
+              
+              {isEditing && (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="p-1 text-green-400 hover:text-green-300 hover:bg-gray-700 rounded transition-colors"
+                  >
+                    <CheckIcon className="w-3 h-3" />
+                  </button>
+                  
+                  <button
+                    onClick={onCancel}
+                    className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors"
+                  >
+                    <XMarkIcon className="w-3 h-3" />
+                  </button>
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
