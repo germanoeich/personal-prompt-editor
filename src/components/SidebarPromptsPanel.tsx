@@ -124,9 +124,9 @@ export function SidebarPromptsPanel({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Search and Filters */}
-      <div className="p-3 border-b border-gray-700 flex-shrink-0 space-y-2">
+      <div className="p-3 border-b border-gray-700 space-y-2">
         {/* Search */}
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -170,7 +170,7 @@ export function SidebarPromptsPanel({
       </div>
 
       {/* Prompts List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="max-h-96 overflow-y-auto">
         {filteredPrompts.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             <div className="text-3xl mb-2">📝</div>
@@ -286,7 +286,7 @@ export function SidebarPromptsPanel({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-700 flex-shrink-0">
+      <div className="p-3 border-t border-gray-700">
         <div className="text-xs text-gray-500">
           {filteredPrompts.length} prompt{filteredPrompts.length !== 1 ? 's' : ''}
         </div>

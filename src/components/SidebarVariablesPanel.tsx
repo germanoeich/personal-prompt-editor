@@ -28,9 +28,9 @@ export function SidebarVariablesPanel({
   const emptyVariables = allVariables.filter(variable => !variables[variable]?.trim());
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Header Actions */}
-      <div className="p-3 border-b border-gray-700 flex-shrink-0">
+      <div className="p-3 border-b border-gray-700">
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm text-gray-400">
             {allVariables.length === 0 ? (
@@ -54,7 +54,7 @@ export function SidebarVariablesPanel({
       </div>
 
       {/* Variables List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="max-h-96 overflow-y-auto">
         {allVariables.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             <div className="text-3xl mb-2">🔤</div>

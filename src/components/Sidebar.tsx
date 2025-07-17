@@ -128,9 +128,8 @@ export function Sidebar({
                   key={panel.id}
                   className="flex flex-col border-b border-gray-700"
                   style={{ 
-                    height: expandedPanels.length === 1 ? 'auto' : panelHeight,
-                    minHeight: '200px',
-                    flex: expandedPanels.length === 1 ? '1' : `0 0 ${panelHeight}`,
+                    flex: expandedPanels.length === 1 ? '1 1 auto' : '0 0 auto',
+                    minHeight: expandedPanels.length === 1 ? '200px' : 'auto',
                   }}
                 >
                   {/* Panel Header */}
@@ -144,7 +143,7 @@ export function Sidebar({
                   </button>
 
                   {/* Panel Content */}
-                  <div className="flex-1 min-h-0 overflow-hidden">
+                  <div className="overflow-hidden">
                     {panel.id === 'variables' && (
                       <SidebarVariablesPanel
                         variables={variables}
