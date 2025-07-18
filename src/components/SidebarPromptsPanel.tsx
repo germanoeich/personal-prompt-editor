@@ -100,9 +100,9 @@ export function SidebarPromptsPanel({
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
       {/* Search and Filters */}
-      <div className="p-3 border-b border-gray-700 space-y-2">
+      <div className="p-3 border-b border-gray-700 space-y-2 flex-shrink-0">
         {/* Search */}
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -146,7 +146,7 @@ export function SidebarPromptsPanel({
       </div>
 
       {/* Prompts List */}
-      <div className="max-h-96 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {filteredPrompts.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             <div className="text-3xl mb-2">📝</div>

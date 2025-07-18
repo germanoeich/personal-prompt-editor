@@ -229,6 +229,30 @@ export const apiHelpers = {
       const { parseTextToPromptContent } = await import('./prompt-conversion');
       const promptContent = parseTextToPromptContent(prompt.content_text);
       
+      // Fetch block data for any block elements
+      const blockElements = promptContent.filter(el => el.type === 'block');
+      if (blockElements.length > 0) {
+        const blockIds = [...new Set(blockElements.map(el => el.blockId))];
+        const blockPromises = blockIds.map(id => blockAPI.getById(id));
+        const blockResponses = await Promise.all(blockPromises);
+        
+        // Create a map of block ID to block data
+        const blockMap = new Map();
+        blockResponses.forEach((blockResponse, index) => {
+          if (blockResponse.data) {
+            blockMap.set(blockIds[index], blockResponse.data);
+          }
+        });
+        
+        // Populate originalBlock for each block element
+        blockElements.forEach(element => {
+          const blockData = blockMap.get(element.blockId);
+          if (blockData) {
+            element.originalBlock = blockData;
+          }
+        });
+      }
+      
       return {
         promptContent,
         variables: prompt.variables,

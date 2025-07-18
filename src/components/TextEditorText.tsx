@@ -39,6 +39,7 @@ export function TextEditorText({
   onBlur,
 }: TextEditorTextProps) {
   const [editContent, setEditContent] = useState(element.content);
+  const [isButtonClick, setIsButtonClick] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset edit content when editing starts
@@ -78,10 +79,25 @@ export function TextEditorText({
     onSave(editContent);
   };
 
+  const handleBlur = () => {
+    // Auto-save when clicking away, but not if a button was clicked
+    if (isEditing && !isButtonClick) {
+      handleSave();
+    }
+    // Reset button click flag
+    setIsButtonClick(false);
+  };
+
+  const handleButtonClick = (callback: () => void) => {
+    setIsButtonClick(true);
+    callback();
+  };
+
   const isEmpty = !element.content.trim();
 
   return (
     <div 
+      data-text-editor
       className={`relative group rounded-lg border-2 border-dashed transition-all ${
         isEmpty 
           ? 'border-gray-600 bg-gray-800/50' 
@@ -139,7 +155,7 @@ export function TextEditorText({
         {isEditing && (
           <>
             <button
-              onClick={handleSave}
+              onClick={() => handleButtonClick(handleSave)}
               className="p-1 text-green-400 hover:text-green-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
               title="Save (Ctrl+Enter)"
             >
@@ -147,7 +163,7 @@ export function TextEditorText({
             </button>
             
             <button
-              onClick={onCancel}
+              onClick={() => handleButtonClick(onCancel)}
               className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
               title="Cancel (Esc)"
             >
@@ -165,6 +181,7 @@ export function TextEditorText({
             value={editContent}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
             className="w-full bg-transparent text-gray-100 border-none outline-none resize-none placeholder-gray-500 text-sm leading-relaxed"
             placeholder="Type your text here... Use {{variable}} for dynamic content"
             style={{ minHeight: '60px' }}

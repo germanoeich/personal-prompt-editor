@@ -262,14 +262,29 @@ export function TextEditorCanvas({
     setSaveSuccess(false);
 
     try {
-      const title = `Prompt - ${new Date().toLocaleString()}`;
-      const response = await apiHelpers.savePromptFromContent(
-        promptContent,
-        variables,
-        title,
-        [], // tags
-        []  // categories
-      );
+      let response;
+      
+      if (currentPrompt) {
+        // Update existing prompt
+        response = await apiHelpers.updatePromptFromContent(
+          currentPrompt.id,
+          promptContent,
+          variables,
+          currentPrompt.title, // Keep existing title
+          [], // tags
+          []  // categories
+        );
+      } else {
+        // Create new prompt
+        const title = `Prompt - ${new Date().toLocaleString()}`;
+        response = await apiHelpers.savePromptFromContent(
+          promptContent,
+          variables,
+          title,
+          [], // tags
+          []  // categories
+        );
+      }
 
       if (response.error) {
         setSaveError(response.error);
@@ -283,7 +298,7 @@ export function TextEditorCanvas({
     } finally {
       setIsSaving(false);
     }
-  }, [promptContent, variables, isSaving]);
+  }, [promptContent, variables, isSaving, currentPrompt]);
 
   // Handle block drop from library
   const handleBlockDrop = useCallback((block: Block, afterElementId?: string) => {

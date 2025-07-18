@@ -39,6 +39,7 @@ export function TextEditorBlock({
   onMoveDown,
 }: TextEditorBlockProps) {
   const [editContent, setEditContent] = useState('');
+  const [isButtonClick, setIsButtonClick] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset edit content when editing starts
@@ -78,15 +79,31 @@ export function TextEditorBlock({
     onSave(editContent);
   };
 
+  const handleBlur = () => {
+    // Auto-save when clicking away, but not if a button was clicked
+    if (isEditing && !isButtonClick) {
+      handleSave();
+    }
+    // Reset button click flag
+    setIsButtonClick(false);
+  };
+
+  const handleButtonClick = (callback: () => void) => {
+    setIsButtonClick(true);
+    callback();
+  };
+
   const displayContent = element.isOverridden ? element.overrideContent : element.originalBlock?.content;
   const variables = extractVariables(displayContent || '');
 
   return (
-    <div className={`relative group rounded-lg border transition-all ${
-      element.isOverridden 
-        ? 'border-orange-500 bg-orange-900/10' 
-        : 'border-blue-500 bg-blue-900/10'
-    }`}>
+    <div 
+      data-block-editor
+      className={`relative group rounded-lg border transition-all ${
+        element.isOverridden 
+          ? 'border-orange-500 bg-orange-900/10' 
+          : 'border-blue-500 bg-blue-900/10'
+      }`}>
 
       {/* Header */}
       <div className={`px-4 py-2 border-b ${
@@ -184,14 +201,14 @@ export function TextEditorBlock({
               {isEditing && (
                 <>
                   <button
-                    onClick={handleSave}
+                    onClick={() => handleButtonClick(handleSave)}
                     className="p-1 text-green-400 hover:text-green-300 hover:bg-gray-700 rounded transition-colors"
                   >
                     <CheckIcon className="w-3 h-3" />
                   </button>
                   
                   <button
-                    onClick={onCancel}
+                    onClick={() => handleButtonClick(onCancel)}
                     className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors"
                   >
                     <XMarkIcon className="w-3 h-3" />
@@ -212,6 +229,7 @@ export function TextEditorBlock({
               value={editContent}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
               className="w-full bg-gray-800 text-gray-100 border border-gray-600 rounded-md p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm leading-relaxed"
               placeholder="Enter your override content... Use {{originalText}} to include the original block content"
               style={{ minHeight: '120px' }}

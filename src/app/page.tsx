@@ -177,13 +177,28 @@ export default function Home() {
 
     try {
       const { apiHelpers } = await import('@/lib/api');
-      const response = await apiHelpers.savePromptFromContent(
-        promptContent,
-        variables,
-        title,
-        [], // tags
-        []  // categories
-      );
+      let response;
+
+      if (currentPrompt) {
+        // Update existing prompt
+        response = await apiHelpers.updatePromptFromContent(
+          currentPrompt.id,
+          promptContent,
+          variables,
+          title,
+          [], // tags
+          []  // categories
+        );
+      } else {
+        // Create new prompt
+        response = await apiHelpers.savePromptFromContent(
+          promptContent,
+          variables,
+          title,
+          [], // tags
+          []  // categories
+        );
+      }
 
       if (response.error) {
         throw new Error(response.error);
@@ -199,7 +214,7 @@ export default function Home() {
       console.error('Error saving prompt:', error);
       alert('Failed to save prompt: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
-  }, [promptContent, variables, loadPrompts]);
+  }, [promptContent, variables, loadPrompts, currentPrompt]);
 
   // Load prompt functionality
   const handlePromptLoad = useCallback(async (prompt: Prompt) => {

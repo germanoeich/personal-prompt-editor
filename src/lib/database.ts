@@ -381,12 +381,17 @@ export class DatabaseManager {
       INSERT INTO prompt_versions (prompt_id, version_number, title, content_snapshot, content_text, variables)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
+    
+    // Ensure content_snapshot is never null/undefined
+    const contentSnapshot = data.contentSnapshot || data.content_snapshot || '';
+    const contentText = data.contentText || data.content_text || '';
+    
     return stmt.run(
       promptId,
       versionNumber,
       data.title,
-      data.contentSnapshot || data.content_snapshot,
-      data.contentText || data.content_text,
+      contentSnapshot,
+      contentText,
       JSON.stringify(data.variables || JSON.parse(data.variables || '{}'))
     );
   }
