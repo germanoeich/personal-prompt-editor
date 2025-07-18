@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import {
   Squares2X2Icon,
   EyeIcon,
+  ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
 import { AdvancedBlockLibrary } from "./AdvancedBlockLibrary";
 import { Block } from "@/types";
@@ -20,8 +21,6 @@ interface RightSidebarProps {
 
   // Preview props
   previewContent: string;
-  showPreview: boolean;
-  onShowPreviewToggle: () => void;
 
   // Resize state callback (for disabling transitions)
   onResizeStateChange?: (isResizing: boolean) => void;
@@ -42,8 +41,6 @@ export function RightSidebar({
   onBlockDelete,
   onRefreshBlocks,
   previewContent,
-  showPreview,
-  onShowPreviewToggle,
   onResizeStateChange,
 }: RightSidebarProps) {
   const [activeTab, setActiveTab] = useState<string | null>("blocks");
@@ -195,33 +192,33 @@ export function RightSidebar({
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-white">Preview</h2>
                     <button
-                      onClick={onShowPreviewToggle}
-                      className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
-                        showPreview
-                          ? 'border-green-500 bg-green-600 text-white hover:bg-green-700'
-                          : 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(previewContent);
+                          // TODO: Add success notification
+                        } catch (error) {
+                          console.error('Failed to copy to clipboard:', error);
+                          // TODO: Add error notification
+                        }
+                      }}
+                      disabled={!previewContent}
+                      className={`px-3 py-1.5 text-sm rounded-md border transition-colors flex items-center gap-2 ${
+                        previewContent
+                          ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
+                          : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
                       }`}
                     >
-                      {showPreview ? 'Hide Preview' : 'Show Preview'}
+                      <ClipboardDocumentIcon className="w-4 h-4" />
+                      Copy Prompt
                     </button>
                   </div>
                 </div>
 
                 {/* Preview Content */}
                 <div className="flex-1 overflow-y-auto min-h-0 p-4">
-                  {showPreview ? (
-                    <div className="text-sm text-gray-200 whitespace-pre-wrap bg-gray-900 p-3 rounded border border-gray-600">
-                      {previewContent || 'Add content to see preview...'}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-gray-400 min-h-32">
-                      <EyeIcon className="w-12 h-12 mb-4" />
-                      <div className="text-lg font-medium mb-2">Preview Disabled</div>
-                      <div className="text-sm text-center">
-                        Click "Show Preview" to see your prompt with variables replaced
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-200 whitespace-pre-wrap bg-gray-900 p-3 rounded border border-gray-600">
+                    {previewContent || 'Add content to see preview...'}
+                  </div>
                 </div>
               </div>
             )}

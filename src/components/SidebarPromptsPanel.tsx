@@ -175,25 +175,12 @@ export function SidebarPromptsPanel({
                       {prompt.title}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePromptLoad(prompt);
-                      }}
-                      disabled={isLoading}
-                      className="p-1 text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
-                      title="Load this prompt"
-                    >
-                      <ArrowDownTrayIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => handleMenuClick(e, prompt.id)}
-                      className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
-                    >
-                      <EllipsisVerticalIcon className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={(e) => handleMenuClick(e, prompt.id)}
+                    className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
+                  >
+                    <EllipsisVerticalIcon className="w-4 h-4" />
+                  </button>
                 </div>
 
                 {/* Description */}
@@ -205,14 +192,26 @@ export function SidebarPromptsPanel({
                   {prompt.description}
                 </p>
 
+                {/* Load Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePromptLoad(prompt);
+                  }}
+                  disabled={isLoading}
+                  className="w-full mt-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4" />
+                  Load Prompt
+                </button>
+
                 {/* Meta Info */}
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
                   <div className="flex items-center gap-1">
                     <ClockIcon className="w-3 h-3" />
                     <span>{formatDate(prompt.lastModified)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>Used {prompt.usage}×</span>
                     {prompt.tags.length > 0 && (
                       <div className="flex gap-1">
                         {prompt.tags.slice(0, 2).map(tag => (
@@ -231,18 +230,6 @@ export function SidebarPromptsPanel({
                 {/* Context Menu */}
                 {openMenuId === prompt.id && (
                   <div className="absolute right-2 top-8 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePromptLoad(prompt);
-                        setOpenMenuId(null);
-                      }}
-                      disabled={isLoading}
-                      className="w-full px-3 py-1.5 text-xs text-left text-blue-400 hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <ArrowDownTrayIcon className="w-3 h-3" />
-                      Load
-                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

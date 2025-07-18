@@ -30,8 +30,6 @@ interface TextEditorCanvasProps {
   setPromptContent: React.Dispatch<React.SetStateAction<PromptContent>>;
   variables: Record<string, string>;
   onVariablesChange: (variables: Record<string, string>) => void;
-  showPreview: boolean;
-  onShowPreviewToggle: () => void;
   allVariables: string[];
   blocks: Block[];
   isLoading?: boolean;
@@ -47,8 +45,6 @@ export function TextEditorCanvas({
   setPromptContent,
   variables,
   onVariablesChange,
-  showPreview,
-  onShowPreviewToggle,
   allVariables,
   blocks,
   isLoading = false,
@@ -251,17 +247,6 @@ export function TextEditorCanvas({
     }).filter(content => content.trim().length > 0).join('\n\n');
   }, [promptContent, variables]);
 
-  // Copy to clipboard
-  const copyToClipboard = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(finalContent);
-      // TODO: Add success notification
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-      // TODO: Add error notification
-    }
-  }, [finalContent]);
-
   // Save prompt
   const savePrompt = useCallback(async () => {
     if (isSaving) return;
@@ -436,18 +421,6 @@ export function TextEditorCanvas({
           )}
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={copyToClipboard}
-            disabled={promptContent.length === 0}
-            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
-              promptContent.length > 0
-                ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
-                : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            Copy Prompt
-          </button>
-
           <button
             onClick={savePrompt}
             disabled={promptContent.length === 0 || isSaving}

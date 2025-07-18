@@ -42,7 +42,7 @@ export function Sidebar({
   onPromptDelete,
   onResizeStateChange,
 }: SidebarProps) {
-  const [activeTab, setActiveTab] = useState<string | null>("variables");
+  const [activeTab, setActiveTab] = useState<string | null>("prompts");
   const [width, setWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

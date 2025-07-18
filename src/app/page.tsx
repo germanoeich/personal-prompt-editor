@@ -13,7 +13,6 @@ export default function Home() {
   // Core state
   const [promptContent, setPromptContent] = useState<PromptContent>([]);
   const [variables, setVariables] = useState<Record<string, string>>({});
-  const [showPreview, setShowPreview] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   const [activeBlock, setActiveBlock] = useState<Block | null>(null);
   
@@ -333,10 +332,6 @@ export default function Home() {
     setVariables(prev => ({ ...prev, [variable]: value }));
   }, []);
 
-  const handleShowPreviewToggle = useCallback(() => {
-    setShowPreview(prev => !prev);
-  }, []);
-
   // Generate preview content
   const previewContent = useMemo(() => {
     const sortedContent = [...promptContent].sort((a, b) => a.order - b.order);
@@ -475,41 +470,6 @@ export default function Home() {
                   </p>
                 </div>
                 
-                {/* Header Actions */}
-                <div className="flex items-center gap-3">
-                  {currentPrompt && (
-                    <div className="text-sm text-gray-400">
-                      Current: <span className="font-medium text-white">{currentPrompt.title}</span>
-                    </div>
-                  )}
-                  
-                  <button
-                    onClick={() => {
-                      const title = prompt('Enter prompt title:');
-                      if (title) {
-                        handleSavePrompt(title);
-                      }
-                    }}
-                    disabled={promptContent.length === 0}
-                    className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
-                      promptContent.length > 0
-                        ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
-                        : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    Save Prompt
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      // TODO: Open prompt library modal
-                      console.log('Open prompt library');
-                    }}
-                    className="px-4 py-2 text-sm border border-gray-600 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    Load Prompt
-                  </button>
-                </div>
               </div>
             </div>
         </header>
@@ -540,8 +500,6 @@ export default function Home() {
                 setPromptContent={setPromptContent}
                 variables={variables}
                 onVariablesChange={handleVariablesChange}
-                showPreview={false}
-                onShowPreviewToggle={() => {}}
                 allVariables={allVariables}
                 blocks={blocks}
                 isLoading={isLoadingPrompt}
@@ -597,8 +555,6 @@ export default function Home() {
             onBlockDelete={handleBlockDelete}
             onRefreshBlocks={loadBlocks}
             previewContent={previewContent}
-            showPreview={showPreview}
-            onShowPreviewToggle={handleShowPreviewToggle}
             onResizeStateChange={handleRightSidebarResizeStateChange}
           />
         </div>
