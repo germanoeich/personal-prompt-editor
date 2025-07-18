@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { simpleDb } from '@/lib/simple-db';
+import { dbManager } from '@/lib/knex-db';
 
 export async function GET() {
   try {
-    const categories = simpleDb.ratingCategories.findAll();
+    const categories = await dbManager.getRatingCategories();
     
     return NextResponse.json({ categories }, { status: 200 });
   } catch (error) {
@@ -21,13 +21,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
     
-    const categoryId = simpleDb.ratingCategories.create({
+    const result = await dbManager.createRatingCategory({
       name,
       description,
-      order: order || 0,
+      order_index: order || 0,
     });
     
-    const category = simpleDb.ratingCategories.findAll().find(c => c?.id === Number(categoryId));
+    const categories = await dbManager.getRatingCategories();
+    const category = categories.find(c => c.id === result.lastInsertRowid);
     
     return NextResponse.json({ category }, { status: 201 });
   } catch (error) {

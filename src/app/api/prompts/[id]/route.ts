@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbManager } from '@/lib/database';
+import { dbManager } from '@/lib/knex-db';
 import { parseTextToPromptContent, generateContentSnapshot } from '@/lib/prompt-conversion';
 
 export async function GET(
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const prompt = dbManager.getPrompt(parseInt(id));
+    const prompt = await dbManager.getPrompt(parseInt(id));
     
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });
@@ -67,15 +67,15 @@ export async function PUT(
         return idMatch ? parseInt(idMatch[1]) : null;
       }).filter(Boolean);
       
-      blockIds.forEach((blockId: number) => {
-        dbManager.incrementBlockUsage(blockId);
-      });
+      for (const blockId of blockIds) {
+        await dbManager.incrementBlockUsage(blockId);
+      }
     }
 
-    const result = dbManager.updatePrompt(parseInt(id), updateData);
+    const result = await dbManager.updatePrompt(parseInt(id), updateData);
     
     // Fetch the updated prompt with parsed JSON fields
-    const updatedPrompt = dbManager.getPrompt(parseInt(id));
+    const updatedPrompt = await dbManager.getPrompt(parseInt(id));
     if (!updatedPrompt) {
       return NextResponse.json({ error: 'Prompt not found after update' }, { status: 500 });
     }
@@ -101,7 +101,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const result = dbManager.deletePrompt(parseInt(id));
+    const result = await dbManager.deletePrompt(parseInt(id));
     
     if (result.changes === 0) {
       return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });

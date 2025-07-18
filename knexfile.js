@@ -1,21 +1,27 @@
 module.exports = {
   development: {
-    client: 'sqlite3',
+    client: 'better-sqlite3',
     connection: {
-      filename: './data/dev.sqlite3'
+      filename: './data/database.sqlite'
     },
     migrations: {
       directory: './src/lib/migrations'
+    },
+    seeds: {
+      directory: './src/lib/seeds'
     },
     useNullAsDefault: true
   },
   production: {
-    client: 'sqlite3',
+    client: 'better-sqlite3',
     connection: {
-      filename: './data/prod.sqlite3'
+      filename: './data/database.sqlite'
     },
     migrations: {
       directory: './src/lib/migrations'
+    },
+    seeds: {
+      directory: './src/lib/seeds'
     },
     useNullAsDefault: true
   }

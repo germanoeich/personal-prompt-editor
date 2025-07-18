@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbManager } from '@/lib/database';
+import { dbManager } from '@/lib/knex-db';
 import { extractVariables } from '@/lib/variables';
 
 export async function GET(
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid block ID' }, { status: 400 });
     }
 
-    const block = dbManager.getBlock(blockId);
+    const block = await dbManager.getBlock(blockId);
     if (!block) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
@@ -47,7 +47,7 @@ export async function PUT(
     const data = await request.json();
     
     // Validate that block exists
-    const existingBlock = dbManager.getBlock(blockId);
+    const existingBlock = await dbManager.getBlock(blockId);
     if (!existingBlock) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
@@ -64,10 +64,10 @@ export async function PUT(
     if (data.categories !== undefined) updateData.categories = Array.isArray(data.categories) ? data.categories : [];
 
     // Update block (this creates a new version automatically)
-    dbManager.updateBlock(blockId, updateData);
+    await dbManager.updateBlock(blockId, updateData);
     
     // Fetch updated block
-    const updatedBlock = dbManager.getBlock(blockId);
+    const updatedBlock = await dbManager.getBlock(blockId);
     if (!updatedBlock) {
       return NextResponse.json({ error: 'Block not found after update' }, { status: 404 });
     }
@@ -98,13 +98,13 @@ export async function DELETE(
     }
 
     // Validate that block exists
-    const existingBlock = dbManager.getBlock(blockId);
+    const existingBlock = await dbManager.getBlock(blockId);
     if (!existingBlock) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
 
     // Delete block
-    dbManager.deleteBlock(blockId);
+    await dbManager.deleteBlock(blockId);
 
     return NextResponse.json({ message: 'Block deleted successfully' });
   } catch (error) {

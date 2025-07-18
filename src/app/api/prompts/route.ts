@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbManager } from '@/lib/database';
+import { dbManager } from '@/lib/knex-db';
 import { replaceVariables } from '@/lib/variables';
 import { parseTextToPromptContent, generateContentSnapshot } from '@/lib/prompt-conversion';
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const tags = searchParams.get('tags')?.split(',').filter(Boolean) || undefined;
     const categories = searchParams.get('categories')?.split(',').filter(Boolean) || undefined;
 
-    const prompts = dbManager.getPrompts({ search, tags, categories });
+    const prompts = await dbManager.getPrompts({ search, tags, categories });
     
     // Parse JSON fields for response
     const parsedPrompts = prompts.map((prompt: any) => ({
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       variables: data.variables || {}
     };
 
-    const result = dbManager.createPrompt(promptData);
+    const result = await dbManager.createPrompt(promptData);
     
     // Increment usage count for any preset blocks used in the content
     const blockMatches = data.contentText.match(/<block\s+id="?(\d+)"?\s*\/?>/g) || [];
@@ -61,12 +61,12 @@ export async function POST(request: NextRequest) {
       return idMatch ? parseInt(idMatch[1]) : null;
     }).filter(Boolean);
     
-    blockIds.forEach((blockId: number) => {
-      dbManager.incrementBlockUsage(blockId);
-    });
+    for (const blockId of blockIds) {
+      await dbManager.incrementBlockUsage(blockId);
+    }
     
     // Fetch the created prompt with parsed JSON fields
-    const createdPrompt = dbManager.getPrompt(result.lastInsertRowid as number);
+    const createdPrompt = await dbManager.getPrompt(result.lastInsertRowid as number);
     if (!createdPrompt) {
       return NextResponse.json({ error: 'Prompt not found after creation' }, { status: 500 });
     }

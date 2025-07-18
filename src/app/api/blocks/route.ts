@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbManager } from '@/lib/database';
+import { dbManager } from '@/lib/knex-db';
 import { extractVariables } from '@/lib/variables';
 
 export async function GET(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const tags = searchParams.get('tags')?.split(',').filter(Boolean) || undefined;
     const categories = searchParams.get('categories')?.split(',').filter(Boolean) || undefined;
 
-    const blocks = dbManager.getBlocks({ search, type, tags, categories });
+    const blocks = await dbManager.getBlocks({ search, type, tags, categories });
     
     // Parse JSON fields for response
     const parsedBlocks = blocks.map((block: any) => ({
@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
       variables
     };
 
-    const result = dbManager.createBlock(blockData);
+    const result = await dbManager.createBlock(blockData);
     
     // Fetch the created block with parsed JSON fields
-    const createdBlock = dbManager.getBlock(result.lastInsertRowid as number);
+    const createdBlock = await dbManager.getBlock(result.lastInsertRowid as number);
     if (!createdBlock) {
       return NextResponse.json({ error: 'Block not found after creation' }, { status: 500 });
     }

@@ -1,12 +1,16 @@
 exports.up = function(knex) {
   return knex.schema.createTable('blocks', function(table) {
     table.increments('id').primary();
-    table.string('title', 255).notNullable();
+    table.text('title').notNullable();
     table.text('content').notNullable();
-    table.enum('type', ['preset', 'one-off']).notNullable();
-    table.json('tags');
-    table.json('categories');
-    table.timestamps(true, true);
+    table.text('type').notNullable().checkIn(['preset']);
+    table.text('tags').defaultTo('');
+    table.text('categories').defaultTo('');
+    table.text('variables').defaultTo('');
+    table.integer('usage_count').defaultTo(0);
+    table.datetime('created_at').defaultTo(knex.fn.now());
+    table.datetime('updated_at').defaultTo(knex.fn.now());
+    table.integer('current_version').defaultTo(1);
   });
 };
 
