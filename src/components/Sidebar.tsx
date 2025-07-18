@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { 
-  ChevronLeftIcon, 
+import { useState, useCallback, useRef, useEffect } from "react";
+import {
+  ChevronLeftIcon,
   ChevronRightIcon,
   VariableIcon,
   DocumentTextIcon,
-} from '@heroicons/react/24/outline';
-import { SidebarVariablesPanel } from './SidebarVariablesPanel';
-import { SidebarPromptsPanel } from './SidebarPromptsPanel';
+} from "@heroicons/react/24/outline";
+import { SidebarVariablesPanel } from "./SidebarVariablesPanel";
+import { SidebarPromptsPanel } from "./SidebarPromptsPanel";
 
 interface SidebarProps {
   // Variables panel props
   variables: Record<string, string>;
   allVariables: string[];
   onVariableChange: (variable: string, value: string) => void;
-  
+
   // Prompts panel props
   prompts: any[];
   onPromptSelect?: (prompt: any) => void;
   onPromptLoad?: (prompt: any) => void;
   onPromptDelete?: (promptId: number) => void;
-  
+
   // Resize state callback (for disabling transitions)
   onResizeStateChange?: (isResizing: boolean) => void;
 }
@@ -42,77 +42,89 @@ export function Sidebar({
   onPromptDelete,
   onResizeStateChange,
 }: SidebarProps) {
-  const [activeTab, setActiveTab] = useState<string | null>('variables');
+  const [activeTab, setActiveTab] = useState<string | null>("variables");
   const [width, setWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const currentWidthRef = useRef(width);
   const minWidth = 240; // Minimum sidebar width
   const maxWidth = 480; // Maximum sidebar width
-  
+
   // Keep ref in sync with state
   useEffect(() => {
     currentWidthRef.current = width;
   }, [width]);
-  
+
   const tabs: SidebarTab[] = [
     {
-      id: 'variables',
-      title: 'Variables',
+      id: "variables",
+      title: "Variables",
       icon: VariableIcon,
     },
     {
-      id: 'prompts',
-      title: 'My Prompts',
+      id: "prompts",
+      title: "My Prompts",
       icon: DocumentTextIcon,
     },
   ];
 
-  const handleTabClick = useCallback((tabId: string) => {
-    if (activeTab === tabId) {
-      // Clicking the same tab closes the sidebar
-      setActiveTab(null);
-    } else {
-      // Clicking a different tab opens that tab
-      setActiveTab(tabId);
-    }
-  }, [activeTab]);
+  const handleTabClick = useCallback(
+    (tabId: string) => {
+      if (activeTab === tabId) {
+        // Clicking the same tab closes the sidebar
+        setActiveTab(null);
+      } else {
+        // Clicking a different tab opens that tab
+        setActiveTab(tabId);
+      }
+    },
+    [activeTab]
+  );
 
   // Handle resize functionality
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    onResizeStateChange?.(true);
-    
-    const startX = e.clientX;
-    const startWidth = currentWidthRef.current;
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startX;
-      const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + deltaX));
-      setWidth(newWidth);
-      currentWidthRef.current = newWidth;
-      localStorage.setItem('sidebarWidth', newWidth.toString());
-    };
-    
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      onResizeStateChange?.(false);
-      // Final save to ensure it's persisted
-      localStorage.setItem('sidebarWidth', currentWidthRef.current.toString());
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [minWidth, maxWidth, onResizeStateChange]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsResizing(true);
+      onResizeStateChange?.(true);
+
+      const startX = e.clientX;
+      const startWidth = currentWidthRef.current;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const deltaX = e.clientX - startX;
+        const newWidth = Math.min(
+          maxWidth,
+          Math.max(minWidth, startWidth + deltaX)
+        );
+        setWidth(newWidth);
+        currentWidthRef.current = newWidth;
+        localStorage.setItem("sidebarWidth", newWidth.toString());
+      };
+
+      const handleMouseUp = () => {
+        setIsResizing(false);
+        onResizeStateChange?.(false);
+        // Final save to ensure it's persisted
+        localStorage.setItem(
+          "sidebarWidth",
+          currentWidthRef.current.toString()
+        );
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [minWidth, maxWidth, onResizeStateChange]
+  );
 
   // No longer need CSS custom properties - flexbox handles layout
 
   // Load saved width on mount
   useEffect(() => {
-    const saved = localStorage.getItem('sidebarWidth');
+    const saved = localStorage.getItem("sidebarWidth");
     if (saved) {
       const savedWidth = parseInt(saved, 10);
       if (savedWidth >= minWidth && savedWidth <= maxWidth) {
@@ -124,16 +136,16 @@ export function Sidebar({
   // Prevent text selection during resize
   useEffect(() => {
     if (isResizing) {
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
     } else {
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
     }
-    
+
     return () => {
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
     };
   }, [isResizing]);
 
@@ -146,13 +158,15 @@ export function Sidebar({
     <div className="flex flex-shrink-0">
       {/* Icon Tab Bar (Always Visible) */}
       <div className="w-12 bg-gray-800 border-r border-gray-700 flex flex-col">
-        <div className="flex flex-col py-2">
-          {tabs.map(tab => (
+        <div className="flex flex-col">
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={`w-full p-3 flex items-center justify-center text-gray-400 hover:text-white transition-colors ${
-                activeTab === tab.id ? 'text-blue-400 bg-gray-700/50' : 'hover:bg-gray-700/30'
+                activeTab === tab.id
+                  ? "text-blue-400 bg-gray-700/50"
+                  : "hover:bg-gray-700/30"
               }`}
               title={tab.title}
             >
@@ -164,38 +178,33 @@ export function Sidebar({
 
       {/* Content Panel (Only when tab is active) */}
       {!isCollapsed && (
-        <div 
+        <div
           ref={containerRef}
           className={`bg-gray-800 border-r border-gray-700 flex flex-col relative group ${
-            isResizing ? '' : 'transition-all duration-300'
+            isResizing ? "" : "transition-all duration-300"
           }`}
           style={{ width: `${width}px` }}
         >
           {/* Resize Handle */}
-          <div 
+          <div
             className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize transition-all z-10 ${
-              isResizing ? 'bg-blue-500' : 'bg-gray-600 hover:bg-blue-500 opacity-0 group-hover:opacity-100'
+              isResizing
+                ? "bg-blue-500"
+                : "bg-gray-600 hover:bg-blue-500 opacity-0 group-hover:opacity-100"
             }`}
             onMouseDown={handleMouseDown}
           ></div>
-          
-          {/* Panel Header */}
-          <div className="p-3 border-b border-gray-700">
-            <h2 className="text-lg font-semibold text-white">
-              {tabs.find(tab => tab.id === activeTab)?.title}
-            </h2>
-          </div>
 
           {/* Tab Content */}
           <div className="flex-1 flex flex-col min-h-0">
-            {activeTab === 'variables' && (
+            {activeTab === "variables" && (
               <SidebarVariablesPanel
                 variables={variables}
                 allVariables={allVariables}
                 onVariableChange={onVariableChange}
               />
             )}
-            {activeTab === 'prompts' && (
+            {activeTab === "prompts" && (
               <SidebarPromptsPanel
                 prompts={prompts}
                 onPromptSelect={onPromptSelect}
