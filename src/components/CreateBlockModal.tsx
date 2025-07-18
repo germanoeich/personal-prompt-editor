@@ -9,6 +9,12 @@ interface CreateBlockModalProps {
   onCreate: (blockData: any) => void;
   availableTags: string[];
   availableCategories: string[];
+  prefillData?: {
+    title?: string;
+    content?: string;
+    tags?: string[];
+    categories?: string[];
+  };
 }
 
 export function CreateBlockModal({
@@ -16,13 +22,13 @@ export function CreateBlockModal({
   onCreate,
   availableTags,
   availableCategories,
+  prefillData,
 }: CreateBlockModalProps) {
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    type: 'preset' as 'preset' | 'one-off',
-    tags: '',
-    categories: '',
+    title: prefillData?.title || '',
+    content: prefillData?.content || '',
+    tags: prefillData?.tags?.join(', ') || '',
+    categories: prefillData?.categories?.join(', ') || '',
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -101,7 +107,7 @@ export function CreateBlockModal({
       await onCreate({
         title: formData.title.trim(),
         content: formData.content,
-        type: formData.type,
+        type: 'preset', // All created blocks are preset blocks
         tags,
         categories,
       });
@@ -127,17 +133,20 @@ export function CreateBlockModal({
   const variables = extractVariables(formData.content);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
       <div
         ref={modalRef}
-        className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+        className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Create New Block</h2>
+        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Create New Preset Block</h2>
+            <p className="text-sm text-gray-400 mt-1">Create a reusable block that can be used across prompts</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -147,7 +156,7 @@ export function CreateBlockModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(90vh-140px)] overflow-y-auto">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               Title *
             </label>
             <input
@@ -155,73 +164,42 @@ export function CreateBlockModal({
               type="text"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.title ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 bg-gray-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                errors.title ? 'border-red-500' : 'border-gray-600'
               }`}
               placeholder="Enter block title..."
             />
             {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+              <p className="mt-1 text-sm text-red-400">{errors.title}</p>
             )}
-          </div>
-
-          {/* Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Type
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="type"
-                  value="preset"
-                  checked={formData.type === 'preset'}
-                  onChange={(e) => handleInputChange('type', e.target.value)}
-                  className="mr-2"
-                />
-                <span className="text-sm">Preset (reusable)</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="type"
-                  value="one-off"
-                  checked={formData.type === 'one-off'}
-                  onChange={(e) => handleInputChange('type', e.target.value)}
-                  className="mr-2"
-                />
-                <span className="text-sm">One-off (prompt-specific)</span>
-              </label>
-            </div>
           </div>
 
           {/* Content */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               Content *
             </label>
             <textarea
               value={formData.content}
               onChange={(e) => handleInputChange('content', e.target.value)}
-              className={`w-full h-32 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-                errors.content ? 'border-red-300' : 'border-gray-300'
+              className={`w-full h-32 px-3 py-2 bg-gray-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-white placeholder-gray-400 ${
+                errors.content ? 'border-red-500' : 'border-gray-600'
               }`}
               placeholder="Enter block content. Use {{variable}} for placeholders..."
             />
             {errors.content && (
-              <p className="mt-1 text-sm text-red-600">{errors.content}</p>
+              <p className="mt-1 text-sm text-red-400">{errors.content}</p>
             )}
             
             {/* Variables preview */}
             {variables.length > 0 && (
               <div className="mt-2">
-                <p className="text-sm text-gray-600 mb-1">Detected variables:</p>
+                <p className="text-sm text-gray-300 mb-1">Detected variables:</p>
                 <div className="flex flex-wrap gap-1">
                   {variables.map((variable, index) => (
                     <span
                       key={index}
-                      className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded border"
+                      className="px-2 py-1 text-xs bg-yellow-900/30 text-yellow-300 rounded border border-yellow-500/30"
                     >
                       {variable}
                     </span>
@@ -233,21 +211,21 @@ export function CreateBlockModal({
 
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               Tags (comma-separated)
             </label>
             <input
               type="text"
               value={formData.tags}
               onChange={(e) => handleInputChange('tags', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
               placeholder="e.g., system, role, identity"
             />
             
             {/* Available tags */}
             {availableTags.length > 0 && (
               <div className="mt-2">
-                <p className="text-sm text-gray-600 mb-1">Available tags:</p>
+                <p className="text-sm text-gray-300 mb-1">Available tags:</p>
                 <div className="flex flex-wrap gap-1">
                   {availableTags.map(tag => (
                     <button
@@ -260,7 +238,7 @@ export function CreateBlockModal({
                           handleInputChange('tags', newTags);
                         }
                       }}
-                      className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
+                      className="px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded border border-gray-600 hover:bg-gray-600 transition-colors"
                     >
                       + {tag}
                     </button>
@@ -272,21 +250,21 @@ export function CreateBlockModal({
 
           {/* Categories */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               Categories (comma-separated)
             </label>
             <input
               type="text"
               value={formData.categories}
               onChange={(e) => handleInputChange('categories', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
               placeholder="e.g., AI Behavior, Foundation"
             />
             
             {/* Available categories */}
             {availableCategories.length > 0 && (
               <div className="mt-2">
-                <p className="text-sm text-gray-600 mb-1">Available categories:</p>
+                <p className="text-sm text-gray-300 mb-1">Available categories:</p>
                 <div className="flex flex-wrap gap-1">
                   {availableCategories.map(category => (
                     <button
@@ -299,7 +277,7 @@ export function CreateBlockModal({
                           handleInputChange('categories', newCategories);
                         }
                       }}
-                      className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
+                      className="px-2 py-1 text-xs bg-blue-900/30 text-blue-300 rounded border border-blue-500/30 hover:bg-blue-900/50 transition-colors"
                     >
                       + {category}
                     </button>
@@ -311,11 +289,11 @@ export function CreateBlockModal({
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-700 bg-gray-800">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
           >
             Cancel
           </button>
@@ -324,7 +302,7 @@ export function CreateBlockModal({
             disabled={isSubmitting}
             className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isSubmitting ? 'Creating...' : 'Create Block'}
+            {isSubmitting ? 'Creating...' : 'Create Preset Block'}
           </button>
         </div>
       </div>

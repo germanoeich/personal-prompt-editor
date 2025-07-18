@@ -153,14 +153,6 @@ export const ratingAPI = {
   },
 };
 
-// Utility functions
-export const utilityAPI = {
-  async seed(): Promise<ApiResponse<void>> {
-    return apiRequest<void>(`${API_BASE_URL}/seed`, {
-      method: 'POST',
-    });
-  },
-};
 
 // Helper functions for common operations
 export const apiHelpers = {

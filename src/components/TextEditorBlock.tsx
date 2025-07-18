@@ -25,6 +25,7 @@ interface TextEditorBlockProps {
   onDelete: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  onCreatePreset?: (content: string, title: string) => void;
 }
 
 export function TextEditorBlock({
@@ -37,6 +38,7 @@ export function TextEditorBlock({
   onDelete,
   onMoveUp,
   onMoveDown,
+  onCreatePreset,
 }: TextEditorBlockProps) {
   const [editContent, setEditContent] = useState('');
   const [isButtonClick, setIsButtonClick] = useState(false);
@@ -76,7 +78,17 @@ export function TextEditorBlock({
   };
 
   const handleSave = () => {
-    onSave(editContent);
+    const currentContent = element.isOverridden 
+      ? element.overrideContent || ''
+      : element.originalBlock?.content || '';
+    
+    // Only save if content actually changed from the current state
+    if (editContent !== currentContent) {
+      onSave(editContent);
+    } else {
+      // If no changes, just cancel editing without changing override state
+      onCancel();
+    }
   };
 
   const handleBlur = () => {
@@ -166,8 +178,19 @@ export function TextEditorBlock({
                     <button
                       onClick={onReset}
                       className="p-1 text-gray-400 hover:text-orange-400 hover:bg-gray-700 rounded transition-colors"
+                      title="Reset to original"
                     >
                       <ArrowPathIcon className="w-3 h-3" />
+                    </button>
+                  )}
+
+                  {onCreatePreset && element.isOverridden && element.overrideContent?.trim() && (
+                    <button
+                      onClick={() => onCreatePreset(element.overrideContent || '', `${element.originalBlock?.title || 'Block'} (Override)`)}
+                      className="p-1 text-gray-400 hover:text-green-400 hover:bg-gray-700 rounded transition-colors"
+                      title="Create preset from override"
+                    >
+                      <BookmarkIcon className="w-3 h-3" />
                     </button>
                   )}
                   

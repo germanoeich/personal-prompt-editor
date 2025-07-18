@@ -5,8 +5,8 @@ import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, us
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { CanvasBlock, Block, Prompt, PromptContent, PromptTextElement } from '@/types';
 import { TextEditorCanvas } from '@/components/TextEditorCanvas';
-import { AdvancedBlockLibrary } from '@/components/AdvancedBlockLibrary';
 import { Sidebar } from '@/components/Sidebar';
+import { RightSidebar } from '@/components/RightSidebar';
 import { extractVariables } from '@/lib/variables';
 
 export default function Home() {
@@ -19,10 +19,15 @@ export default function Home() {
   
   // Resize state for disabling transitions
   const [isSidebarResizing, setIsSidebarResizing] = useState(false);
+  const [isRightSidebarResizing, setIsRightSidebarResizing] = useState(false);
   
   // Handle sidebar resize state changes
   const handleSidebarResizeStateChange = useCallback((isResizing: boolean) => {
     setIsSidebarResizing(isResizing);
+  }, []);
+
+  const handleRightSidebarResizeStateChange = useCallback((isResizing: boolean) => {
+    setIsRightSidebarResizing(isResizing);
   }, []);
 
   // Block library state
@@ -81,9 +86,6 @@ export default function Home() {
       try {
         // Load blocks and prompts
         await Promise.all([loadBlocks(), loadPrompts()]);
-        
-        // Seed database if needed (only if empty)
-        await fetch('/api/seed', { method: 'POST' });
       } catch (error) {
         console.error('Failed to initialize app:', error);
       }
@@ -335,6 +337,37 @@ export default function Home() {
     setShowPreview(prev => !prev);
   }, []);
 
+  // Generate preview content
+  const previewContent = useMemo(() => {
+    const sortedContent = [...promptContent].sort((a, b) => a.order - b.order);
+    
+    return sortedContent.map(element => {
+      if (element.type === 'text') {
+        return element.content.replace(/\{\{([^}]+)\}\}/g, (match, variable) => {
+          return variables[variable] || match;
+        });
+      } else if (element.type === 'block') {
+        const blockContent = element.isOverridden 
+          ? element.overrideContent || ''
+          : element.originalBlock?.content || '';
+        
+        // Handle {{originalText}} replacement in overrides
+        let finalContent = blockContent;
+        if (element.isOverridden && element.overrideContent?.includes('{{originalText}}')) {
+          finalContent = element.overrideContent.replace(
+            /\{\{originalText\}\}/g, 
+            element.originalBlock?.content || ''
+          );
+        }
+        
+        return finalContent.replace(/\{\{([^}]+)\}\}/g, (match, variable) => {
+          return variables[variable] || match;
+        });
+      }
+      return '';
+    }).join('\n\n');
+  }, [promptContent, variables]);
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -507,24 +540,16 @@ export default function Home() {
                 setPromptContent={setPromptContent}
                 variables={variables}
                 onVariablesChange={handleVariablesChange}
-                showPreview={showPreview}
-                onShowPreviewToggle={handleShowPreviewToggle}
+                showPreview={false}
+                onShowPreviewToggle={() => {}}
                 allVariables={allVariables}
                 blocks={blocks}
                 isLoading={isLoadingPrompt}
                 currentPrompt={currentPrompt}
                 onTitleChange={handleTitleChange}
-              />
-
-              {/* Block Library */}
-              <AdvancedBlockLibrary
-                blocks={blocks}
-                isLoading={isLoadingBlocks}
-                error={blocksError}
                 onBlockCreate={handleBlockCreate}
-                onBlockUpdate={handleBlockUpdate}
-                onBlockDelete={handleBlockDelete}
-                onRefresh={loadBlocks}
+                availableTags={blocks.flatMap(block => block.tags).filter((tag, index, arr) => arr.indexOf(tag) === index)}
+                availableCategories={blocks.flatMap(block => block.categories).filter((cat, index, arr) => arr.indexOf(cat) === index)}
               />
             </main>
 
@@ -561,6 +586,21 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Right Sidebar */}
+          <RightSidebar
+            blocks={blocks}
+            isLoadingBlocks={isLoadingBlocks}
+            blocksError={blocksError}
+            onBlockCreate={handleBlockCreate}
+            onBlockUpdate={handleBlockUpdate}
+            onBlockDelete={handleBlockDelete}
+            onRefreshBlocks={loadBlocks}
+            previewContent={previewContent}
+            showPreview={showPreview}
+            onShowPreviewToggle={handleShowPreviewToggle}
+            onResizeStateChange={handleRightSidebarResizeStateChange}
+          />
         </div>
       </div>
       

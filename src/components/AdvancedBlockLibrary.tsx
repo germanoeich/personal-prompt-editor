@@ -21,6 +21,7 @@ interface AdvancedBlockLibraryProps {
   onBlockUpdate: (id: number, updates: any) => Promise<void>;
   onBlockDelete: (id: number) => Promise<void>;
   onRefresh: () => void;
+  disableResize?: boolean; // New prop to disable resize functionality
 }
 
 export function AdvancedBlockLibrary({
@@ -31,6 +32,7 @@ export function AdvancedBlockLibrary({
   onBlockUpdate,
   onBlockDelete,
   onRefresh,
+  disableResize = false,
 }: AdvancedBlockLibraryProps) {
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     search: '',
@@ -89,11 +91,6 @@ export function AdvancedBlockLibrary({
         if (!matchesTitle && !matchesContent) return false;
       }
 
-      // Type filter
-      if (searchFilters.type && block.type !== searchFilters.type) {
-        return false;
-      }
-
       // Tags filter (AND logic - block must have all selected tags)
       if (selectedTags.length > 0) {
         if (!selectedTags.every(tag => block.tags.includes(tag))) {
@@ -115,17 +112,12 @@ export function AdvancedBlockLibrary({
   // Sort blocks by usage count and recency
   const sortedBlocks = useMemo(() => {
     return [...filteredBlocks].sort((a, b) => {
-      // First by type (preset blocks first)
-      if (a.type !== b.type) {
-        return a.type === 'preset' ? -1 : 1;
-      }
-      
-      // Then by usage count (descending)
+      // First by usage count (descending)
       if (a.usage_count !== b.usage_count) {
         return b.usage_count - a.usage_count;
       }
       
-      // Finally by update time (most recent first)
+      // Then by update time (most recent first)
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     });
   }, [filteredBlocks]);
@@ -135,10 +127,6 @@ export function AdvancedBlockLibrary({
     setSearchFilters(prev => ({ ...prev, search: value }));
   }, []);
 
-  // Handle type filter
-  const handleTypeFilter = useCallback((type: 'preset' | undefined) => {
-    setSearchFilters(prev => ({ ...prev, type }));
-  }, []);
 
   // Handle tag selection
   const handleTagToggle = useCallback((tag: string) => {
@@ -285,16 +273,20 @@ export function AdvancedBlockLibrary({
   return (
     <div 
       ref={containerRef}
-      className="border-l border-gray-700 bg-gray-800 flex flex-col flex-shrink-0 relative group"
-      style={{ width: `${width}px` }}
+      className={`bg-gray-800 flex flex-col relative group h-full ${
+        disableResize ? 'flex-1' : 'border-l border-gray-700 flex-shrink-0'
+      }`}
+      style={disableResize ? {} : { width: `${width}px` }}
     >
       {/* Resize Handle */}
-      <div 
-        className={`absolute left-0 top-0 bottom-0 w-1 cursor-col-resize transition-all z-10 ${
-          isResizing ? 'bg-blue-500' : 'bg-gray-600 hover:bg-blue-500 opacity-0 group-hover:opacity-100'
-        }`}
-        onMouseDown={handleMouseDown}
-      ></div>
+      {!disableResize && (
+        <div 
+          className={`absolute left-0 top-0 bottom-0 w-1 cursor-col-resize transition-all z-10 ${
+            isResizing ? 'bg-blue-500' : 'bg-gray-600 hover:bg-blue-500 opacity-0 group-hover:opacity-100'
+          }`}
+          onMouseDown={handleMouseDown}
+        ></div>
+      )}
       {/* Header */}
       <div className="p-4 border-b border-gray-700">
         <div className="flex items-center justify-between mb-4">
@@ -320,40 +312,59 @@ export function AdvancedBlockLibrary({
           />
         </div>
 
-        {/* Filter Toggle */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleTypeFilter(undefined)}
-              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                !searchFilters.type
-                  ? 'bg-blue-600 text-white border-blue-500'
-                  : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => handleTypeFilter('preset')}
-              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                searchFilters.type === 'preset'
-                  ? 'bg-blue-600 text-white border-blue-500'
-                  : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
-              }`}
-            >
-              Preset
-            </button>
-          </div>
-
+        {/* Filter Toggle and Active Filters */}
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`p-1 rounded transition-colors ${
-              showFilters ? 'text-blue-400 bg-gray-700' : 'text-gray-400 hover:text-gray-300'
+              showFilters || selectedTags.length > 0 || selectedCategories.length > 0 
+                ? 'text-blue-400 bg-gray-700' 
+                : 'text-gray-400 hover:text-gray-300'
             }`}
             title="Toggle filters"
           >
             <FunnelIcon className="w-4 h-4" />
           </button>
+          
+          {/* Active Category Filters */}
+          {selectedCategories.map(category => (
+            <span
+              key={category}
+              className="px-2 py-0.5 text-xs bg-blue-900/30 text-blue-300 rounded-full flex-shrink-0 whitespace-nowrap flex items-center gap-1"
+            >
+              {category}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCategoryToggle(category);
+                }}
+                className="hover:text-blue-100 transition-colors"
+                title={`Remove ${category} filter`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          
+          {/* Active Tag Filters */}
+          {selectedTags.map(tag => (
+            <span
+              key={tag}
+              className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded-full flex-shrink-0 whitespace-nowrap flex items-center gap-1"
+            >
+              #{tag}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTagToggle(tag);
+                }}
+                className="hover:text-gray-100 transition-colors"
+                title={`Remove ${tag} filter`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
         </div>
 
         {/* Advanced Filters */}
@@ -410,7 +421,7 @@ export function AdvancedBlockLibrary({
             )}
 
             {/* Clear Filters */}
-            {(selectedTags.length > 0 || selectedCategories.length > 0 || searchFilters.search || searchFilters.type) && (
+            {(selectedTags.length > 0 || selectedCategories.length > 0 || searchFilters.search) && (
               <button
                 onClick={handleClearFilters}
                 className="w-full px-3 py-2 text-sm text-gray-300 border border-gray-600 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
@@ -437,7 +448,7 @@ export function AdvancedBlockLibrary({
       </div>
 
       {/* Blocks List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {isLoading ? (
           <div className="p-4 text-center text-gray-400">
             Loading blocks...

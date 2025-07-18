@@ -23,6 +23,7 @@ import { apiHelpers } from '@/lib/api';
 import { TextEditorBlock } from './TextEditorBlock';
 import { TextEditorText } from './TextEditorText';
 import { DropZone } from './DropZone';
+import { CreateBlockModal } from './CreateBlockModal';
 
 interface TextEditorCanvasProps {
   promptContent: PromptContent;
@@ -36,6 +37,9 @@ interface TextEditorCanvasProps {
   isLoading?: boolean;
   currentPrompt?: Prompt | null;
   onTitleChange?: (title: string) => void;
+  onBlockCreate?: (blockData: any) => Promise<void>;
+  availableTags?: string[];
+  availableCategories?: string[];
 }
 
 export function TextEditorCanvas({
@@ -50,6 +54,9 @@ export function TextEditorCanvas({
   isLoading = false,
   currentPrompt,
   onTitleChange,
+  onBlockCreate,
+  availableTags = [],
+  availableCategories = [],
 }: TextEditorCanvasProps) {
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
   const [focusedElementId, setFocusedElementId] = useState<string | null>(null);
@@ -59,6 +66,8 @@ export function TextEditorCanvas({
   const [titleValue, setTitleValue] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createModalPrefill, setCreateModalPrefill] = useState<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync title value with current prompt
@@ -305,6 +314,39 @@ export function TextEditorCanvas({
     addBlockElement(block, afterElementId);
   }, [addBlockElement]);
 
+  // Create preset handlers
+  const handleCreatePresetFromText = useCallback((content: string) => {
+    setCreateModalPrefill({
+      title: 'Text Block',
+      content,
+      tags: [],
+      categories: [],
+    });
+    setIsCreateModalOpen(true);
+  }, []);
+
+  const handleCreatePresetFromBlock = useCallback((content: string, title: string) => {
+    setCreateModalPrefill({
+      title,
+      content,
+      tags: [],
+      categories: [],
+    });
+    setIsCreateModalOpen(true);
+  }, []);
+
+  const handleCreateBlock = useCallback(async (blockData: any) => {
+    if (onBlockCreate) {
+      try {
+        await onBlockCreate(blockData);
+        setIsCreateModalOpen(false);
+        setCreateModalPrefill(null);
+      } catch (error) {
+        console.error('Failed to create block:', error);
+      }
+    }
+  }, [onBlockCreate]);
+
   // Title editing handlers
   const handleTitleClick = useCallback(() => {
     setIsEditingTitle(true);
@@ -395,17 +437,6 @@ export function TextEditorCanvas({
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={onShowPreviewToggle}
-            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
-              showPreview
-                ? 'border-green-500 bg-green-600 text-white hover:bg-green-700'
-                : 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600'
-            }`}
-          >
-            {showPreview ? 'Hide Preview' : 'Show Preview'}
-          </button>
-          
-          <button
             onClick={copyToClipboard}
             disabled={promptContent.length === 0}
             className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
@@ -447,16 +478,6 @@ export function TextEditorCanvas({
             >
               <XMarkIcon className="w-4 h-4" />
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Preview Section */}
-      {showPreview && (
-        <div className="p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0">
-          <h3 className="text-sm font-medium text-blue-300 mb-2">Preview</h3>
-          <div className="text-sm text-gray-200 whitespace-pre-wrap bg-gray-900 p-3 rounded border border-gray-600 max-h-40 overflow-y-auto">
-            {previewContent || 'Add content to see preview...'}
           </div>
         </div>
       )}
@@ -515,6 +536,7 @@ export function TextEditorCanvas({
                     onMoveDown={index < sortedContent.length - 1 ? () => moveElement(element.id, 'down') : undefined}
                     onFocus={() => setFocusedElementId(element.id)}
                     onBlur={() => setFocusedElementId(null)}
+                    onCreatePreset={handleCreatePresetFromText}
                   />
                 ) : (
                   <TextEditorBlock
@@ -538,6 +560,7 @@ export function TextEditorCanvas({
                     onDelete={() => deleteElement(element.id)}
                     onMoveUp={index > 0 ? () => moveElement(element.id, 'up') : undefined}
                     onMoveDown={index < sortedContent.length - 1 ? () => moveElement(element.id, 'down') : undefined}
+                    onCreatePreset={handleCreatePresetFromBlock}
                   />
                 )}
 
@@ -576,6 +599,20 @@ export function TextEditorCanvas({
           </div>
         )}
       </div>
+
+      {/* Create Block Modal */}
+      {isCreateModalOpen && (
+        <CreateBlockModal
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setCreateModalPrefill(null);
+          }}
+          onCreate={handleCreateBlock}
+          availableTags={availableTags}
+          availableCategories={availableCategories}
+          prefillData={createModalPrefill}
+        />
+      )}
     </div>
   );
 }

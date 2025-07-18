@@ -189,28 +189,67 @@ export function BlockLibraryItem({
           </div>
         </div>
 
-        {/* Block Info */}
-        <div className="flex items-center gap-2 mt-2 ml-6">
-          <span className={`px-2 py-0.5 text-xs rounded-full ${
-            block.type === 'preset' 
-              ? 'bg-blue-900/30 text-blue-300' 
-              : 'bg-gray-700 text-gray-300'
+        {/* Content Preview */}
+        <div className="mt-2 ml-6">
+          <div className={`text-xs text-gray-300 leading-relaxed whitespace-pre-wrap break-words ${
+            isExpanded ? 'max-h-none' : 'max-h-16 overflow-hidden'
           }`}>
-            {block.type}
-          </span>
-          
-          {block.variables.length > 0 && (
-            <span className="px-2 py-0.5 text-xs bg-green-900/30 text-green-300 rounded-full">
-              {block.variables.length} var{block.variables.length !== 1 ? 's' : ''}
-            </span>
-          )}
-
-          {block.usage_count > 0 && (
-            <span className="px-2 py-0.5 text-xs bg-purple-900/30 text-purple-300 rounded-full">
-              Used {block.usage_count}×
-            </span>
-          )}
+            {isExpanded ? block.content : (() => {
+              const lines = block.content.split('\n');
+              const firstThreeLines = lines.slice(0, 3);
+              const previewContent = firstThreeLines.join('\n');
+              
+              return (
+                <>
+                  {previewContent}
+                  {lines.length > 3 && (
+                    <span className="text-gray-500">...</span>
+                  )}
+                </>
+              );
+            })()}
+          </div>
         </div>
+
+        {/* Block Info - Only show when collapsed */}
+        {!isExpanded && (
+          <div className="mt-2 ml-6 space-y-1">
+            {/* Category and Usage Count */}
+            <div className="flex items-center gap-2 overflow-hidden">
+              {/* First category */}
+              {block.categories.length > 0 && (
+                <span className="px-2 py-0.5 text-xs bg-blue-900/30 text-blue-300 rounded-full flex-shrink-0 whitespace-nowrap">
+                  {block.categories[0]}
+                </span>
+              )}
+
+              {block.usage_count > 0 && (
+                <span className="px-2 py-0.5 text-xs bg-purple-900/30 text-purple-300 rounded-full flex-shrink-0 whitespace-nowrap">
+                  Used {block.usage_count}×
+                </span>
+              )}
+            </div>
+
+            {/* Tags */}
+            {block.tags.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {block.tags.slice(0, 3).map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded-full flex-shrink-0 whitespace-nowrap"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+                {block.tags.length > 3 && (
+                  <span className="px-2 py-0.5 text-xs bg-gray-600 text-gray-400 rounded-full flex-shrink-0 whitespace-nowrap">
+                    +{block.tags.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Expanded Content */}
         {isExpanded && (
@@ -246,16 +285,6 @@ export function BlockLibraryItem({
               </div>
             ) : (
               <>
-                {/* Content Preview */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">
-                    Content
-                  </label>
-                  <div className="text-xs text-gray-200 whitespace-pre-wrap bg-gray-800 p-2 rounded border border-gray-600 max-h-32 overflow-y-auto">
-                    {block.content}
-                  </div>
-                </div>
-
                 {/* Variables */}
                 {block.variables.length > 0 && (
                   <div>

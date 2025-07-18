@@ -8,6 +8,7 @@ import {
   XMarkIcon,
   ChevronUpIcon,
   ChevronDownIcon,
+  BookmarkIcon,
 } from '@heroicons/react/24/outline';
 import { PromptTextElement } from '@/types';
 
@@ -23,6 +24,7 @@ interface TextEditorTextProps {
   onMoveDown?: () => void;
   onFocus: () => void;
   onBlur: () => void;
+  onCreatePreset?: (content: string) => void;
 }
 
 export function TextEditorText({
@@ -37,6 +39,7 @@ export function TextEditorText({
   onMoveDown,
   onFocus,
   onBlur,
+  onCreatePreset,
 }: TextEditorTextProps) {
   const [editContent, setEditContent] = useState(element.content);
   const [isButtonClick, setIsButtonClick] = useState(false);
@@ -121,6 +124,16 @@ export function TextEditorText({
             >
               <PencilIcon className="w-3 h-3" />
             </button>
+
+            {onCreatePreset && element.content.trim() && (
+              <button
+                onClick={() => onCreatePreset(element.content)}
+                className="p-1 text-gray-400 hover:text-green-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
+                title="Create preset from this text"
+              >
+                <BookmarkIcon className="w-3 h-3" />
+              </button>
+            )}
             
             {onMoveUp && (
               <button
