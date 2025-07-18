@@ -65,12 +65,6 @@ export function SidebarPromptsPanel({
       }
     });
 
-  const handlePromptClick = useCallback((prompt: any) => {
-    if (onPromptSelect) {
-      onPromptSelect(prompt.prompt);
-    }
-  }, [onPromptSelect]);
-
   const handlePromptLoad = useCallback(async (prompt: any) => {
     if (onPromptLoad) {
       setIsLoading(true);
@@ -81,6 +75,12 @@ export function SidebarPromptsPanel({
       }
     }
   }, [onPromptLoad]);
+
+  const handlePromptClick = useCallback((prompt: any) => {
+    if (onPromptLoad) {
+      handlePromptLoad(prompt);
+    }
+  }, [onPromptLoad, handlePromptLoad]);
 
   const handleMenuClick = useCallback((e: React.MouseEvent, promptId: string) => {
     e.stopPropagation();
@@ -162,7 +162,7 @@ export function SidebarPromptsPanel({
             {filteredPrompts.map(prompt => (
               <div
                 key={prompt.id}
-                className="relative p-3 rounded-lg hover:bg-gray-700 cursor-pointer transition-colors border border-transparent hover:border-gray-600"
+                className="relative p-3 rounded-lg hover:bg-gray-700 cursor-pointer transition-all duration-200 border border-transparent hover:border-blue-500/50 hover:shadow-lg"
                 onClick={() => handlePromptClick(prompt)}
               >
                 {/* Header */}
@@ -191,19 +191,6 @@ export function SidebarPromptsPanel({
                 }}>
                   {prompt.description}
                 </p>
-
-                {/* Load Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePromptLoad(prompt);
-                  }}
-                  disabled={isLoading}
-                  className="w-full mt-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <ArrowDownTrayIcon className="w-4 h-4" />
-                  Load Prompt
-                </button>
 
                 {/* Meta Info */}
                 <div className="flex items-center justify-between text-xs text-gray-500 mt-2">

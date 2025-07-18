@@ -100,6 +100,17 @@ export interface PromptBlockElement extends PromptElement {
 
 export type PromptContent = (PromptTextElement | PromptBlockElement)[];
 
+// Tab types
+export interface PromptTab {
+  id: string;
+  promptId: number | null; // null for new prompts
+  title: string;
+  content: PromptContent;
+  variables: Record<string, string>;
+  isDirty: boolean; // Has unsaved changes
+  isNew: boolean; // Is this a new, unsaved prompt
+}
+
 export interface DragItem {
   type: 'block';
   block: Block;

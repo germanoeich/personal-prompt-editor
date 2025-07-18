@@ -3,18 +3,37 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { CanvasBlock, Block, Prompt, PromptContent, PromptTextElement } from '@/types';
+import { CanvasBlock, Block, Prompt, PromptContent, PromptTextElement, PromptTab } from '@/types';
 import { TextEditorCanvas } from '@/components/TextEditorCanvas';
 import { Sidebar } from '@/components/Sidebar';
 import { RightSidebar } from '@/components/RightSidebar';
 import { extractVariables } from '@/lib/variables';
 
 export default function Home() {
-  // Core state
-  const [promptContent, setPromptContent] = useState<PromptContent>([]);
-  const [variables, setVariables] = useState<Record<string, string>>({});
-  const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
+  // Tab state
+  const [tabs, setTabs] = useState<PromptTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  
+  // Core state (for backward compatibility - will refactor later)
   const [activeBlock, setActiveBlock] = useState<Block | null>(null);
+  
+  // Prompts state (moved up to be available for activeTab calculation)
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
+  
+  // Block library state
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
+  const [blocksError, setBlocksError] = useState<string | null>(null);
+  
+  // Get active tab data (now prompts is available)
+  const activeTab = tabs.find(tab => tab.id === activeTabId);
+  const promptContent = activeTab?.content || [];
+  const variables = activeTab?.variables || {};
+  const currentPrompt = activeTab && !activeTab.isNew && activeTab.promptId 
+    ? prompts.find(p => p.id === activeTab.promptId) || null 
+    : null;
   
   // Resize state for disabling transitions
   const [isSidebarResizing, setIsSidebarResizing] = useState(false);
@@ -28,16 +47,6 @@ export default function Home() {
   const handleRightSidebarResizeStateChange = useCallback((isResizing: boolean) => {
     setIsRightSidebarResizing(isResizing);
   }, []);
-
-  // Block library state
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
-  const [blocksError, setBlocksError] = useState<string | null>(null);
-  
-  // Prompts state
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
-  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
 
   // Load blocks from API
   const loadBlocks = useCallback(async () => {
@@ -92,6 +101,88 @@ export default function Home() {
 
     initializeApp();
   }, [loadBlocks, loadPrompts]);
+
+  // Tab management functions
+  const createNewTab = useCallback(() => {
+    const newTab: PromptTab = {
+      id: `tab-${Date.now()}`,
+      promptId: null,
+      title: 'New Prompt',
+      content: [],
+      variables: {},
+      isDirty: false,
+      isNew: true,
+    };
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+  }, []);
+
+  const openPromptInTab = useCallback((prompt: Prompt) => {
+    // Check if prompt is already open
+    const existingTab = tabs.find(tab => tab.promptId === prompt.id);
+    if (existingTab) {
+      setActiveTabId(existingTab.id);
+      return;
+    }
+
+    // Load prompt content
+    const loadPromptIntoTab = async () => {
+      setIsLoadingPrompt(true);
+      try {
+        const { apiHelpers } = await import('@/lib/api');
+        const result = await apiHelpers.loadPromptAsContent(prompt.id);
+        
+        if (!result) {
+          throw new Error('Failed to load prompt content');
+        }
+        
+        const newTab: PromptTab = {
+          id: `tab-${prompt.id}-${Date.now()}`,
+          promptId: prompt.id,
+          title: prompt.title,
+          content: result.promptContent,
+          variables: result.variables,
+          isDirty: false,
+          isNew: false,
+        };
+        
+        setTabs(prev => [...prev, newTab]);
+        setActiveTabId(newTab.id);
+      } catch (error) {
+        console.error('Error loading prompt:', error);
+        alert('Failed to load prompt: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      } finally {
+        setIsLoadingPrompt(false);
+      }
+    };
+
+    loadPromptIntoTab();
+  }, [tabs]);
+
+  const closeTab = useCallback((tabId: string) => {
+    const tab = tabs.find(t => t.id === tabId);
+    if (tab?.isDirty && !confirm('This tab has unsaved changes. Close anyway?')) {
+      return;
+    }
+
+    setTabs(prev => prev.filter(t => t.id !== tabId));
+    
+    // If closing active tab, switch to another
+    if (activeTabId === tabId) {
+      const remainingTabs = tabs.filter(t => t.id !== tabId);
+      setActiveTabId(remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1].id : null);
+    }
+  }, [tabs, activeTabId]);
+
+  const updateActiveTab = useCallback((updates: Partial<PromptTab>) => {
+    if (!activeTabId) return;
+    
+    setTabs(prev => prev.map(tab => 
+      tab.id === activeTabId 
+        ? { ...tab, ...updates }
+        : tab
+    ));
+  }, [activeTabId]);
 
   // Block CRUD operations
   const handleBlockCreate = useCallback(async (blockData: any) => {
@@ -171,7 +262,7 @@ export default function Home() {
 
   // Prompt operations
   const handleSavePrompt = useCallback(async (title: string) => {
-    if (promptContent.length === 0) {
+    if (!activeTab || activeTab.content.length === 0) {
       alert('Add some content to your prompt before saving.');
       return;
     }
@@ -180,12 +271,12 @@ export default function Home() {
       const { apiHelpers } = await import('@/lib/api');
       let response;
 
-      if (currentPrompt) {
+      if (activeTab.promptId && !activeTab.isNew) {
         // Update existing prompt
         response = await apiHelpers.updatePromptFromContent(
-          currentPrompt.id,
-          promptContent,
-          variables,
+          activeTab.promptId,
+          activeTab.content,
+          activeTab.variables,
           title,
           [], // tags
           []  // categories
@@ -193,8 +284,8 @@ export default function Home() {
       } else {
         // Create new prompt
         response = await apiHelpers.savePromptFromContent(
-          promptContent,
-          variables,
+          activeTab.content,
+          activeTab.variables,
           title,
           [], // tags
           []  // categories
@@ -205,7 +296,18 @@ export default function Home() {
         throw new Error(response.error);
       }
 
-      setCurrentPrompt(response.data!);
+      // Update tab to reflect saved state
+      setTabs(prev => prev.map(tab => 
+        tab.id === activeTabId 
+          ? { 
+              ...tab, 
+              promptId: response.data!.id,
+              isNew: false,
+              isDirty: false,
+              title: response.data!.title
+            }
+          : tab
+      ));
       
       // Refresh prompts list
       loadPrompts();
@@ -215,32 +317,12 @@ export default function Home() {
       console.error('Error saving prompt:', error);
       alert('Failed to save prompt: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
-  }, [promptContent, variables, loadPrompts, currentPrompt]);
+  }, [activeTab, activeTabId, loadPrompts]);
 
-  // Load prompt functionality
+  // Load prompt functionality - now opens in tab
   const handlePromptLoad = useCallback(async (prompt: Prompt) => {
-    setIsLoadingPrompt(true);
-    
-    try {
-      const { apiHelpers } = await import('@/lib/api');
-      const result = await apiHelpers.loadPromptAsContent(prompt.id);
-      
-      if (!result) {
-        throw new Error('Failed to load prompt content');
-      }
-      
-      setPromptContent(result.promptContent);
-      setVariables(result.variables);
-      setCurrentPrompt(result.prompt);
-      
-      console.log('Prompt loaded successfully:', result.prompt.title);
-    } catch (error) {
-      console.error('Error loading prompt:', error);
-      alert('Failed to load prompt: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    } finally {
-      setIsLoadingPrompt(false);
-    }
-  }, []);
+    openPromptInTab(prompt);
+  }, [openPromptInTab]);
 
   // Delete prompt functionality
   const handlePromptDelete = useCallback(async (promptId: number) => {
@@ -274,36 +356,47 @@ export default function Home() {
 
   // Title change functionality
   const handleTitleChange = useCallback(async (newTitle: string) => {
-    if (!currentPrompt) {
-      console.error('No current prompt to update title');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/prompts/${currentPrompt.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newTitle,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update prompt title: ${response.statusText}`);
+    if (!activeTabId) return;
+    
+    // Check if title actually changed
+    const currentTab = tabs.find(t => t.id === activeTabId);
+    if (!currentTab || currentTab.title === newTitle) return;
+    
+    // Update tab title immediately
+    setTabs(prev => prev.map(tab => {
+      if (tab.id === activeTabId) {
+        // Only mark as dirty if it's a new prompt or title actually changed
+        const titleChanged = tab.title !== newTitle;
+        return { ...tab, title: newTitle, isDirty: tab.isDirty || (tab.isNew && titleChanged) };
       }
+      return tab;
+    }));
+    
+    // If this is a saved prompt, update in database
+    if (currentPrompt) {
+      try {
+        const response = await fetch(`/api/prompts/${currentPrompt.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newTitle,
+          }),
+        });
 
-      const updatedPrompt = await response.json();
-      setCurrentPrompt(updatedPrompt);
-      
-      // Refresh prompts list to show updated title
-      loadPrompts();
-      
-      console.log('Prompt title updated successfully');
-    } catch (error) {
-      console.error('Error updating prompt title:', error);
-      alert('Failed to update prompt title: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        if (!response.ok) {
+          throw new Error(`Failed to update prompt title: ${response.statusText}`);
+        }
+
+        // Refresh prompts list to show updated title
+        loadPrompts();
+        
+        console.log('Prompt title updated successfully');
+      } catch (error) {
+        console.error('Error updating prompt title:', error);
+        alert('Failed to update prompt title: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      }
     }
-  }, [currentPrompt, loadPrompts]);
+  }, [activeTabId, tabs, currentPrompt, loadPrompts]);
 
   // Calculate all variables needed
   const allVariables = useMemo(() => {
@@ -324,13 +417,49 @@ export default function Home() {
   }, [promptContent]);
 
   // Variable management
+  // Update these to work with tabs
+  const setPromptContent = useCallback((contentOrUpdater: PromptContent | ((prev: PromptContent) => PromptContent)) => {
+    if (!activeTabId) return;
+    
+    setTabs(prev => prev.map(tab => {
+      if (tab.id === activeTabId) {
+        const newContent = typeof contentOrUpdater === 'function' 
+          ? contentOrUpdater(tab.content)
+          : contentOrUpdater;
+        // Only mark as dirty if content actually changed
+        const contentChanged = JSON.stringify(newContent) !== JSON.stringify(tab.content);
+        return { ...tab, content: newContent, isDirty: tab.isDirty || contentChanged };
+      }
+      return tab;
+    }));
+  }, [activeTabId]);
+
   const handleVariablesChange = useCallback((newVariables: Record<string, string>) => {
-    setVariables(newVariables);
-  }, []);
+    if (!activeTabId) return;
+    
+    setTabs(prev => prev.map(tab => {
+      if (tab.id === activeTabId) {
+        // Only mark as dirty if variables actually changed
+        const variablesChanged = JSON.stringify(newVariables) !== JSON.stringify(tab.variables);
+        return { ...tab, variables: newVariables, isDirty: tab.isDirty || variablesChanged };
+      }
+      return tab;
+    }));
+  }, [activeTabId]);
 
   const handleVariableChange = useCallback((variable: string, value: string) => {
-    setVariables(prev => ({ ...prev, [variable]: value }));
-  }, []);
+    if (!activeTabId) return;
+    
+    setTabs(prev => prev.map(tab => {
+      if (tab.id === activeTabId) {
+        const newVariables = { ...tab.variables, [variable]: value };
+        // Only mark as dirty if variable actually changed
+        const variableChanged = tab.variables[variable] !== value;
+        return { ...tab, variables: newVariables, isDirty: tab.isDirty || variableChanged };
+      }
+      return tab;
+    }));
+  }, [activeTabId]);
 
   // Generate preview content
   const previewContent = useMemo(() => {
@@ -496,6 +625,14 @@ export default function Home() {
             <main className="flex flex-1 min-h-0">
               {/* Canvas Area */}
               <TextEditorCanvas
+                // Tab props
+                tabs={tabs}
+                activeTabId={activeTabId}
+                onTabSelect={setActiveTabId}
+                onTabClose={closeTab}
+                onNewTab={createNewTab}
+                
+                // Content props
                 promptContent={promptContent}
                 setPromptContent={setPromptContent}
                 variables={variables}
@@ -506,6 +643,7 @@ export default function Home() {
                 currentPrompt={currentPrompt}
                 onTitleChange={handleTitleChange}
                 onBlockCreate={handleBlockCreate}
+                onSavePrompt={handleSavePrompt}
                 availableTags={blocks.flatMap(block => block.tags).filter((tag, index, arr) => arr.indexOf(tag) === index)}
                 availableCategories={blocks.flatMap(block => block.categories).filter((cat, index, arr) => arr.indexOf(cat) === index)}
               />

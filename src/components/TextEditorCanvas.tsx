@@ -15,17 +15,25 @@ import {
   PromptTextElement, 
   PromptBlockElement, 
   Block,
-  Prompt
+  Prompt,
+  PromptTab
 } from '@/types';
 import { extractVariables, replaceVariables } from '@/lib/variables';
 import { generateElementId } from '@/lib/utils';
-import { apiHelpers } from '@/lib/api';
 import { TextEditorBlock } from './TextEditorBlock';
 import { TextEditorText } from './TextEditorText';
 import { DropZone } from './DropZone';
 import { CreateBlockModal } from './CreateBlockModal';
 
 interface TextEditorCanvasProps {
+  // Tab props
+  tabs: PromptTab[];
+  activeTabId: string | null;
+  onTabSelect: (tabId: string) => void;
+  onTabClose: (tabId: string) => void;
+  onNewTab: () => void;
+  
+  // Content props (for active tab)
   promptContent: PromptContent;
   setPromptContent: React.Dispatch<React.SetStateAction<PromptContent>>;
   variables: Record<string, string>;
@@ -36,11 +44,20 @@ interface TextEditorCanvasProps {
   currentPrompt?: Prompt | null;
   onTitleChange?: (title: string) => void;
   onBlockCreate?: (blockData: any) => Promise<void>;
+  onSavePrompt?: (title: string) => Promise<void>;
   availableTags?: string[];
   availableCategories?: string[];
 }
 
 export function TextEditorCanvas({
+  // Tab props
+  tabs,
+  activeTabId,
+  onTabSelect,
+  onTabClose,
+  onNewTab,
+  
+  // Content props
   promptContent,
   setPromptContent,
   variables,
@@ -51,6 +68,7 @@ export function TextEditorCanvas({
   currentPrompt,
   onTitleChange,
   onBlockCreate,
+  onSavePrompt,
   availableTags = [],
   availableCategories = [],
 }: TextEditorCanvasProps) {
@@ -66,14 +84,15 @@ export function TextEditorCanvas({
   const [createModalPrefill, setCreateModalPrefill] = useState<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Sync title value with current prompt
+  // Sync title value with active tab
   useEffect(() => {
-    if (currentPrompt) {
-      setTitleValue(currentPrompt.title);
+    const activeTab = tabs.find(t => t.id === activeTabId);
+    if (activeTab) {
+      setTitleValue(activeTab.title);
     } else {
       setTitleValue('');
     }
-  }, [currentPrompt]);
+  }, [activeTabId, tabs]);
 
   // Droppable setup for text editor
   const { setNodeRef, isOver } = useDroppable({
@@ -249,50 +268,27 @@ export function TextEditorCanvas({
 
   // Save prompt
   const savePrompt = useCallback(async () => {
-    if (isSaving) return;
+    if (isSaving || !onSavePrompt) return;
     
     setIsSaving(true);
     setSaveError(null);
     setSaveSuccess(false);
 
     try {
-      let response;
+      const activeTab = tabs.find(t => t.id === activeTabId);
+      const title = activeTab?.title || `Prompt - ${new Date().toLocaleString()}`;
       
-      if (currentPrompt) {
-        // Update existing prompt
-        response = await apiHelpers.updatePromptFromContent(
-          currentPrompt.id,
-          promptContent,
-          variables,
-          currentPrompt.title, // Keep existing title
-          [], // tags
-          []  // categories
-        );
-      } else {
-        // Create new prompt
-        const title = `Prompt - ${new Date().toLocaleString()}`;
-        response = await apiHelpers.savePromptFromContent(
-          promptContent,
-          variables,
-          title,
-          [], // tags
-          []  // categories
-        );
-      }
-
-      if (response.error) {
-        setSaveError(response.error);
-      } else {
-        setSaveSuccess(true);
-        // Clear success message after 3 seconds
-        setTimeout(() => setSaveSuccess(false), 3000);
-      }
+      await onSavePrompt(title);
+      
+      setSaveSuccess(true);
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsSaving(false);
     }
-  }, [promptContent, variables, isSaving, currentPrompt]);
+  }, [isSaving, onSavePrompt, tabs, activeTabId]);
 
   // Handle block drop from library
   const handleBlockDrop = useCallback((block: Block, afterElementId?: string) => {
@@ -375,9 +371,49 @@ export function TextEditorCanvas({
         </div>
       )}
       
+      {/* Tab Bar */}
+      <div className="flex bg-gray-800 border-b border-gray-700 flex-shrink-0">
+        <div className="flex overflow-x-auto scrollbar-hide">
+          {tabs.map(tab => (
+            <div
+              key={tab.id}
+              className={`flex items-center min-w-0 border-r border-gray-700 ${
+                tab.id === activeTabId ? 'bg-gray-700' : 'bg-gray-800 hover:bg-gray-750'
+              }`}
+            >
+              <button
+                onClick={() => onTabSelect(tab.id)}
+                className={`px-4 py-2 text-sm flex items-center gap-2 ${
+                  tab.id === activeTabId ? 'text-white' : 'text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                <span className="truncate max-w-[200px]">
+                  {tab.isDirty && '• '}
+                  {tab.title}
+                </span>
+              </button>
+              <button
+                onClick={() => onTabClose(tab.id)}
+                className="p-1 mx-1 text-gray-400 hover:text-gray-300 hover:bg-gray-600 rounded"
+              >
+                <XMarkIcon className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={onNewTab}
+            className="px-4 py-2 text-sm text-gray-400 hover:text-gray-300 hover:bg-gray-750 flex items-center gap-2 border-r border-gray-700"
+          >
+            <PlusIcon className="w-4 h-4" />
+            New
+          </button>
+        </div>
+      </div>
+      
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0 group">
-        <div className="flex items-center gap-2">
+      {activeTabId && (
+        <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0 group">
+          <div className="flex items-center gap-2">
           {isEditingTitle ? (
             <div className="flex items-center gap-2">
               <input
@@ -408,7 +444,7 @@ export function TextEditorCanvas({
           ) : (
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold text-white">
-                {currentPrompt?.title || 'Untitled Prompt'}
+                {tabs.find(t => t.id === activeTabId)?.title || 'Untitled Prompt'}
               </h2>
               <button
                 onClick={handleTitleClick}
@@ -438,6 +474,7 @@ export function TextEditorCanvas({
           </button>
         </div>
       </div>
+      )}
 
       {/* Save Error Message */}
       {saveError && (
@@ -462,7 +499,20 @@ export function TextEditorCanvas({
           isOver ? 'bg-blue-900/20 border-blue-500/50' : ''
         }`}
       >
-        {sortedContent.length === 0 ? (
+        {!activeTabId ? (
+          <div className="flex flex-col items-center justify-center text-gray-400 min-h-96">
+            <div className="text-5xl mb-4">📝</div>
+            <div className="text-xl font-medium mb-2">No prompt open</div>
+            <div className="text-sm mb-6">Open a prompt from the sidebar or create a new one</div>
+            <button
+              onClick={onNewTab}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4" />
+              Create New Prompt
+            </button>
+          </div>
+        ) : sortedContent.length === 0 ? (
           <div className={`flex flex-col items-center justify-center text-gray-400 min-h-96 transition-all ${
             isOver ? 'text-blue-300' : ''
           }`}>
