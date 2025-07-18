@@ -26,12 +26,10 @@ interface SidebarProps {
   onResizeStateChange?: (isResizing: boolean) => void;
 }
 
-export interface SidebarPanel {
+export interface SidebarTab {
   id: string;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  isExpanded: boolean;
-  defaultHeight?: number;
 }
 
 export function Sidebar({
@@ -56,33 +54,27 @@ export function Sidebar({
   useEffect(() => {
     currentWidthRef.current = width;
   }, [width]);
-  const [panels, setPanels] = useState<SidebarPanel[]>([
+  const [activeTab, setActiveTab] = useState('variables');
+  
+  const tabs: SidebarTab[] = [
     {
       id: 'variables',
       title: 'Variables',
       icon: VariableIcon,
-      isExpanded: false,
-      defaultHeight: 400,
     },
     {
       id: 'prompts',
       title: 'My Prompts',
       icon: DocumentTextIcon,
-      isExpanded: false,
-      defaultHeight: 300,
     },
-  ]);
+  ];
 
   const toggleSidebar = useCallback(() => {
     setIsCollapsed(prev => !prev);
   }, []);
 
-  const togglePanel = useCallback((panelId: string) => {
-    setPanels(prev => prev.map(panel => 
-      panel.id === panelId 
-        ? { ...panel, isExpanded: !panel.isExpanded }
-        : panel
-    ));
+  const setActiveTabCallback = useCallback((tabId: string) => {
+    setActiveTab(tabId);
   }, []);
 
   // Handle resize functionality
@@ -144,7 +136,7 @@ export function Sidebar({
     };
   }, [isResizing]);
 
-  const expandedPanels = panels.filter(panel => panel.isExpanded);
+  // No longer need expanded panels logic
 
   const sidebarWidth = isCollapsed ? 60 : width;
 
@@ -183,88 +175,62 @@ export function Sidebar({
         </button>
       </div>
 
-      {/* Panel Icons (when collapsed) */}
-      {isCollapsed && (
-        <div className="flex-1 py-2">
-          {panels.map(panel => (
+      {/* Tab Navigation */}
+      {!isCollapsed && (
+        <div className="flex border-b border-gray-700">
+          {tabs.map(tab => (
             <button
-              key={panel.id}
-              onClick={() => togglePanel(panel.id)}
-              className={`w-full p-3 flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-gray-700 transition-colors ${
-                panel.isExpanded ? 'bg-gray-700 text-blue-400' : ''
+              key={tab.id}
+              onClick={() => setActiveTabCallback(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors flex-1 ${
+                activeTab === tab.id
+                  ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700/50'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700/30'
               }`}
-              title={panel.title}
             >
-              <panel.icon className="w-5 h-5" />
+              <tab.icon className="w-4 h-4" />
+              {tab.title}
             </button>
           ))}
         </div>
       )}
 
-      {/* Panels */}
+      {/* Tab Icons (when collapsed) */}
+      {isCollapsed && (
+        <div className="flex-1 py-2">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTabCallback(tab.id)}
+              className={`w-full p-3 flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-gray-700 transition-colors ${
+                activeTab === tab.id ? 'bg-gray-700 text-blue-400' : ''
+              }`}
+              title={tab.title}
+            >
+              <tab.icon className="w-5 h-5" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tab Content */}
       {!isCollapsed && (
         <div className="flex-1 flex flex-col min-h-0">
-          {panels.map(panel => {
-            if (panel.isExpanded) {
-              // Expanded panel
-              const totalExpandedHeight = expandedPanels.reduce((sum, p) => sum + (p.defaultHeight || 300), 0);
-              const availableHeight = totalExpandedHeight;
-              const panelHeight = `${((panel.defaultHeight || 300) / availableHeight) * 100}%`;
-
-              return (
-                <div
-                  key={panel.id}
-                  className="flex flex-col border-b border-gray-700"
-                  style={{ 
-                    flex: expandedPanels.length === 1 ? '1 1 auto' : '0 0 auto',
-                    minHeight: expandedPanels.length === 1 ? '200px' : 'auto',
-                  }}
-                >
-                  {/* Panel Header */}
-                  <button
-                    onClick={() => togglePanel(panel.id)}
-                    className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 border-b border-gray-700 transition-colors flex-shrink-0"
-                  >
-                    <panel.icon className="w-5 h-5 text-blue-400" />
-                    <span className="font-medium">{panel.title}</span>
-                    <ChevronLeftIcon className="w-4 h-4 ml-auto" />
-                  </button>
-
-                  {/* Panel Content */}
-                  <div className="overflow-hidden">
-                    {panel.id === 'variables' && (
-                      <SidebarVariablesPanel
-                        variables={variables}
-                        allVariables={allVariables}
-                        onVariableChange={onVariableChange}
-                      />
-                    )}
-                    {panel.id === 'prompts' && (
-                      <SidebarPromptsPanel
-                        prompts={prompts}
-                        onPromptSelect={onPromptSelect}
-                        onPromptLoad={onPromptLoad}
-                        onPromptDelete={onPromptDelete}
-                      />
-                    )}
-                  </div>
-                </div>
-              );
-            } else {
-              // Collapsed panel header
-              return (
-                <button
-                  key={panel.id}
-                  onClick={() => togglePanel(panel.id)}
-                  className="flex items-center gap-3 p-3 text-gray-300 hover:bg-gray-700 border-b border-gray-700 transition-colors"
-                >
-                  <panel.icon className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium">{panel.title}</span>
-                  <ChevronRightIcon className="w-4 h-4 ml-auto" />
-                </button>
-              );
-            }
-          })}
+          {activeTab === 'variables' && (
+            <SidebarVariablesPanel
+              variables={variables}
+              allVariables={allVariables}
+              onVariableChange={onVariableChange}
+            />
+          )}
+          {activeTab === 'prompts' && (
+            <SidebarPromptsPanel
+              prompts={prompts}
+              onPromptSelect={onPromptSelect}
+              onPromptLoad={onPromptLoad}
+              onPromptDelete={onPromptDelete}
+            />
+          )}
         </div>
       )}
     </div>
