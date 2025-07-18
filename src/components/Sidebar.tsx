@@ -42,7 +42,7 @@ export function Sidebar({
   onPromptDelete,
   onResizeStateChange,
 }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<string | null>('variables');
   const [width, setWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,7 +54,6 @@ export function Sidebar({
   useEffect(() => {
     currentWidthRef.current = width;
   }, [width]);
-  const [activeTab, setActiveTab] = useState('variables');
   
   const tabs: SidebarTab[] = [
     {
@@ -69,13 +68,15 @@ export function Sidebar({
     },
   ];
 
-  const toggleSidebar = useCallback(() => {
-    setIsCollapsed(prev => !prev);
-  }, []);
-
-  const setActiveTabCallback = useCallback((tabId: string) => {
-    setActiveTab(tabId);
-  }, []);
+  const handleTabClick = useCallback((tabId: string) => {
+    if (activeTab === tabId) {
+      // Clicking the same tab closes the sidebar
+      setActiveTab(null);
+    } else {
+      // Clicking a different tab opens that tab
+      setActiveTab(tabId);
+    }
+  }, [activeTab]);
 
   // Handle resize functionality
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -136,74 +137,22 @@ export function Sidebar({
     };
   }, [isResizing]);
 
-  // No longer need expanded panels logic
+  // VSCode-style sidebar with vertical icon tabs
 
-  const sidebarWidth = isCollapsed ? 60 : width;
+  const isCollapsed = activeTab === null;
+  const actualWidth = isCollapsed ? 48 : width; // VSCode-style narrow icon bar
 
   return (
-    <div 
-      ref={containerRef}
-      className={`bg-gray-800 border-r border-gray-700 flex flex-col flex-shrink-0 group relative ${
-        isResizing ? '' : 'transition-all duration-300'
-      }`}
-      style={{ width: `${sidebarWidth}px` }}
-    >
-      {/* Resize Handle */}
-      {!isCollapsed && (
-        <div 
-          className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize transition-all z-10 ${
-            isResizing ? 'bg-blue-500' : 'bg-gray-600 hover:bg-blue-500 opacity-0 group-hover:opacity-100'
-          }`}
-          onMouseDown={handleMouseDown}
-        ></div>
-      )}
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-700">
-        {!isCollapsed && (
-          <h2 className="text-lg font-semibold text-white">Sidebar</h2>
-        )}
-        <button
-          onClick={toggleSidebar}
-          className="p-1.5 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors"
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {isCollapsed ? (
-            <ChevronRightIcon className="w-5 h-5" />
-          ) : (
-            <ChevronLeftIcon className="w-5 h-5" />
-          )}
-        </button>
-      </div>
-
-      {/* Tab Navigation */}
-      {!isCollapsed && (
-        <div className="flex border-b border-gray-700">
+    <div className="flex flex-shrink-0">
+      {/* Icon Tab Bar (Always Visible) */}
+      <div className="w-12 bg-gray-900 border-r border-gray-700 flex flex-col">
+        <div className="flex flex-col py-2">
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTabCallback(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors flex-1 ${
-                activeTab === tab.id
-                  ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700/50'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700/30'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.title}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Tab Icons (when collapsed) */}
-      {isCollapsed && (
-        <div className="flex-1 py-2">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTabCallback(tab.id)}
-              className={`w-full p-3 flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-gray-700 transition-colors ${
-                activeTab === tab.id ? 'bg-gray-700 text-blue-400' : ''
+              onClick={() => handleTabClick(tab.id)}
+              className={`w-full p-3 flex items-center justify-center text-gray-400 hover:text-white transition-colors ${
+                activeTab === tab.id ? 'text-blue-400 bg-gray-700/50' : 'hover:bg-gray-700/30'
               }`}
               title={tab.title}
             >
@@ -211,26 +160,50 @@ export function Sidebar({
             </button>
           ))}
         </div>
-      )}
+      </div>
 
-      {/* Tab Content */}
+      {/* Content Panel (Only when tab is active) */}
       {!isCollapsed && (
-        <div className="flex-1 flex flex-col min-h-0">
-          {activeTab === 'variables' && (
-            <SidebarVariablesPanel
-              variables={variables}
-              allVariables={allVariables}
-              onVariableChange={onVariableChange}
-            />
-          )}
-          {activeTab === 'prompts' && (
-            <SidebarPromptsPanel
-              prompts={prompts}
-              onPromptSelect={onPromptSelect}
-              onPromptLoad={onPromptLoad}
-              onPromptDelete={onPromptDelete}
-            />
-          )}
+        <div 
+          ref={containerRef}
+          className={`bg-gray-800 border-r border-gray-700 flex flex-col relative group ${
+            isResizing ? '' : 'transition-all duration-300'
+          }`}
+          style={{ width: `${width}px` }}
+        >
+          {/* Resize Handle */}
+          <div 
+            className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize transition-all z-10 ${
+              isResizing ? 'bg-blue-500' : 'bg-gray-600 hover:bg-blue-500 opacity-0 group-hover:opacity-100'
+            }`}
+            onMouseDown={handleMouseDown}
+          ></div>
+          
+          {/* Panel Header */}
+          <div className="p-3 border-b border-gray-700">
+            <h2 className="text-lg font-semibold text-white">
+              {tabs.find(tab => tab.id === activeTab)?.title}
+            </h2>
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {activeTab === 'variables' && (
+              <SidebarVariablesPanel
+                variables={variables}
+                allVariables={allVariables}
+                onVariableChange={onVariableChange}
+              />
+            )}
+            {activeTab === 'prompts' && (
+              <SidebarPromptsPanel
+                prompts={prompts}
+                onPromptSelect={onPromptSelect}
+                onPromptLoad={onPromptLoad}
+                onPromptDelete={onPromptDelete}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
