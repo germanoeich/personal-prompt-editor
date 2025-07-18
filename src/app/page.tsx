@@ -17,36 +17,18 @@ export default function Home() {
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   const [activeBlock, setActiveBlock] = useState<Block | null>(null);
   
-  // Dynamic widths state
-  const [sidebarWidth, setSidebarWidth] = useState(320); // Expanded width
-  const [actualSidebarWidth, setActualSidebarWidth] = useState(320); // Actual rendered width
+  // Resize state for disabling transitions
   const [isSidebarResizing, setIsSidebarResizing] = useState(false);
   
-  // Load saved sidebar width on mount
+  // Initialize CSS custom property on mount
   useEffect(() => {
-    const saved = localStorage.getItem('sidebarWidth');
-    if (saved) {
-      const savedWidth = parseInt(saved, 10);
-      if (savedWidth >= 240 && savedWidth <= 480) {
-        setSidebarWidth(savedWidth);
-        // Initial actual width will be set by the Sidebar component
-      }
-    }
-  }, []);
-  
-  // Handle sidebar width changes
-  const handleSidebarWidthChange = useCallback((newWidth: number) => {
-    setSidebarWidth(newWidth);
+    // Set initial sidebar width CSS variable
+    document.documentElement.style.setProperty('--sidebar-width', '320px');
   }, []);
   
   // Handle sidebar resize state changes
   const handleSidebarResizeStateChange = useCallback((isResizing: boolean) => {
     setIsSidebarResizing(isResizing);
-  }, []);
-  
-  // Handle actual sidebar width changes (including collapsed state)
-  const handleActualSidebarWidthChange = useCallback((actualWidth: number) => {
-    setActualSidebarWidth(actualWidth);
   }, []);
 
   // Block library state
@@ -445,7 +427,7 @@ export default function Home() {
             isSidebarResizing ? '' : 'transition-all duration-300'
           }`}
           style={{ 
-            marginLeft: `${actualSidebarWidth}px`
+            marginLeft: 'var(--sidebar-width)'
           }}
         >
           <div className="flex items-center justify-between">
@@ -503,7 +485,7 @@ export default function Home() {
           isSidebarResizing ? '' : 'transition-all duration-300'
         }`}
         style={{ 
-          marginLeft: `${sidebarWidth}px`
+          marginLeft: 'var(--sidebar-width)'
         }}
       >
         {/* Canvas Area */}
@@ -544,9 +526,7 @@ export default function Home() {
         }}
         onPromptLoad={handlePromptLoad}
         onPromptDelete={handlePromptDelete}
-        onWidthChange={handleSidebarWidthChange}
         onResizeStateChange={handleSidebarResizeStateChange}
-        onActualWidthChange={handleActualSidebarWidthChange}
       />
 
       {/* Status Bar */}
@@ -555,7 +535,7 @@ export default function Home() {
           isSidebarResizing ? '' : 'transition-all duration-300'
         }`}
         style={{ 
-          marginLeft: `${sidebarWidth}px`
+          marginLeft: 'var(--sidebar-width)'
         }}
       >
         <div className="flex items-center justify-between">

@@ -22,10 +22,8 @@ interface SidebarProps {
   onPromptLoad?: (prompt: any) => void;
   onPromptDelete?: (promptId: number) => void;
   
-  // Width callback
-  onWidthChange?: (width: number) => void;
+  // Resize state callback (for disabling transitions)
   onResizeStateChange?: (isResizing: boolean) => void;
-  onActualWidthChange?: (actualWidth: number) => void;
 }
 
 export interface SidebarPanel {
@@ -44,9 +42,7 @@ export function Sidebar({
   onPromptSelect,
   onPromptLoad,
   onPromptDelete,
-  onWidthChange,
   onResizeStateChange,
-  onActualWidthChange,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [width, setWidth] = useState(320);
@@ -78,13 +74,8 @@ export function Sidebar({
   ]);
 
   const toggleSidebar = useCallback(() => {
-    setIsCollapsed(prev => {
-      const newCollapsed = !prev;
-      const actualWidth = newCollapsed ? 60 : width;
-      onActualWidthChange?.(actualWidth);
-      return newCollapsed;
-    });
-  }, [width, onActualWidthChange]);
+    setIsCollapsed(prev => !prev);
+  }, []);
 
   const togglePanel = useCallback((panelId: string) => {
     setPanels(prev => prev.map(panel => 
@@ -108,8 +99,6 @@ export function Sidebar({
       const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + deltaX));
       setWidth(newWidth);
       currentWidthRef.current = newWidth;
-      onWidthChange?.(newWidth);
-      onActualWidthChange?.(newWidth); // Since we're not collapsed during resize
       localStorage.setItem('sidebarWidth', newWidth.toString());
     };
     
@@ -124,7 +113,13 @@ export function Sidebar({
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [minWidth, maxWidth, onWidthChange, onResizeStateChange]);
+  }, [minWidth, maxWidth, onResizeStateChange]);
+
+  // Update CSS custom property when width or collapsed state changes
+  useEffect(() => {
+    const actualWidth = isCollapsed ? 60 : width;
+    document.documentElement.style.setProperty('--sidebar-width', `${actualWidth}px`);
+  }, [width, isCollapsed]);
 
   // Load saved width on mount
   useEffect(() => {
@@ -133,13 +128,9 @@ export function Sidebar({
       const savedWidth = parseInt(saved, 10);
       if (savedWidth >= minWidth && savedWidth <= maxWidth) {
         setWidth(savedWidth);
-        onWidthChange?.(savedWidth);
       }
     }
-    // Notify actual width on mount
-    const actualWidth = isCollapsed ? 60 : width;
-    onActualWidthChange?.(actualWidth);
-  }, [minWidth, maxWidth, onWidthChange, onActualWidthChange, isCollapsed, width]);
+  }, [minWidth, maxWidth]);
 
   // Prevent text selection during resize
   useEffect(() => {
