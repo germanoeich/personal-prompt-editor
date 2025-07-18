@@ -413,25 +413,9 @@ export default function Home() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex h-screen bg-gray-900">
-        {/* Sidebar */}
-        <Sidebar
-          variables={variables}
-          allVariables={allVariables}
-          onVariableChange={handleVariableChange}
-          prompts={prompts}
-          onPromptSelect={(prompt) => {
-            console.log('Selected prompt:', prompt);
-          }}
-          onPromptLoad={handlePromptLoad}
-          onPromptDelete={handlePromptDelete}
-          onResizeStateChange={handleSidebarResizeStateChange}
-        />
-        
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
-          <header className="bg-gray-800 border-b border-gray-700 shadow-sm flex-shrink-0">
+      <div className="h-screen bg-gray-900 flex flex-col">
+        {/* Header - Spans Full Screen */}
+        <header className="bg-gray-800 border-b border-gray-700 shadow-sm flex-shrink-0">
             <div className="px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -480,66 +464,85 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </header>
+        </header>
 
-          {/* Main Content */}
-          <main className="flex flex-1 min-h-0">
-            {/* Canvas Area */}
-            <TextEditorCanvas
-              promptContent={promptContent}
-              setPromptContent={setPromptContent}
-              variables={variables}
-              onVariablesChange={handleVariablesChange}
-              showPreview={showPreview}
-              onShowPreviewToggle={handleShowPreviewToggle}
-              allVariables={allVariables}
-              blocks={blocks}
-              isLoading={isLoadingPrompt}
-              currentPrompt={currentPrompt}
-              onTitleChange={handleTitleChange}
-            />
+        {/* Main Content Area - Below Header */}
+        <div className="flex flex-1 min-h-0">
+          {/* Sidebar */}
+          <Sidebar
+            variables={variables}
+            allVariables={allVariables}
+            onVariableChange={handleVariableChange}
+            prompts={prompts}
+            onPromptSelect={(prompt) => {
+              console.log('Selected prompt:', prompt);
+            }}
+            onPromptLoad={handlePromptLoad}
+            onPromptDelete={handlePromptDelete}
+            onResizeStateChange={handleSidebarResizeStateChange}
+          />
+          
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Main Content */}
+            <main className="flex flex-1 min-h-0">
+              {/* Canvas Area */}
+              <TextEditorCanvas
+                promptContent={promptContent}
+                setPromptContent={setPromptContent}
+                variables={variables}
+                onVariablesChange={handleVariablesChange}
+                showPreview={showPreview}
+                onShowPreviewToggle={handleShowPreviewToggle}
+                allVariables={allVariables}
+                blocks={blocks}
+                isLoading={isLoadingPrompt}
+                currentPrompt={currentPrompt}
+                onTitleChange={handleTitleChange}
+              />
 
-            {/* Block Library */}
-            <AdvancedBlockLibrary
-              blocks={blocks}
-              isLoading={isLoadingBlocks}
-              error={blocksError}
-              onBlockCreate={handleBlockCreate}
-              onBlockUpdate={handleBlockUpdate}
-              onBlockDelete={handleBlockDelete}
-              onRefresh={loadBlocks}
-            />
-          </main>
+              {/* Block Library */}
+              <AdvancedBlockLibrary
+                blocks={blocks}
+                isLoading={isLoadingBlocks}
+                error={blocksError}
+                onBlockCreate={handleBlockCreate}
+                onBlockUpdate={handleBlockUpdate}
+                onBlockDelete={handleBlockDelete}
+                onRefresh={loadBlocks}
+              />
+            </main>
 
-          {/* Status Bar */}
-          <div className="bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span>
-                  {promptContent.length} element{promptContent.length !== 1 ? 's' : ''} in prompt
-                </span>
-                <span>•</span>
-                <span>
-                  {promptContent.filter(el => el.type === 'block').length} block{promptContent.filter(el => el.type === 'block').length !== 1 ? 's' : ''}, {promptContent.filter(el => el.type === 'text').length} text
-                </span>
-                {Object.keys(variables).length > 0 && (
-                  <>
-                    <span>•</span>
-                    <span>
-                      {Object.keys(variables).length} variable{Object.keys(variables).length !== 1 ? 's' : ''} set
-                    </span>
-                  </>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <span>{blocks.length} blocks in library</span>
-                {currentPrompt && (
-                  <>
-                    <span>•</span>
-                    <span>Saved as: {currentPrompt.title}</span>
-                  </>
-                )}
+            {/* Status Bar */}
+            <div className="bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span>
+                    {promptContent.length} element{promptContent.length !== 1 ? 's' : ''} in prompt
+                  </span>
+                  <span>•</span>
+                  <span>
+                    {promptContent.filter(el => el.type === 'block').length} block{promptContent.filter(el => el.type === 'block').length !== 1 ? 's' : ''}, {promptContent.filter(el => el.type === 'text').length} text
+                  </span>
+                  {Object.keys(variables).length > 0 && (
+                    <>
+                      <span>•</span>
+                      <span>
+                        {Object.keys(variables).length} variable{Object.keys(variables).length !== 1 ? 's' : ''} set
+                      </span>
+                    </>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <span>{blocks.length} blocks in library</span>
+                  {currentPrompt && (
+                    <>
+                      <span>•</span>
+                      <span>Saved as: {currentPrompt.title}</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>

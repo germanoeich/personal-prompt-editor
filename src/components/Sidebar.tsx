@@ -145,7 +145,7 @@ export function Sidebar({
   return (
     <div className="flex flex-shrink-0">
       {/* Icon Tab Bar (Always Visible) */}
-      <div className="w-12 bg-gray-900 border-r border-gray-700 flex flex-col">
+      <div className="w-12 bg-gray-800 border-r border-gray-700 flex flex-col">
         <div className="flex flex-col py-2">
           {tabs.map(tab => (
             <button
