@@ -20,12 +20,6 @@ export default function Home() {
   // Resize state for disabling transitions
   const [isSidebarResizing, setIsSidebarResizing] = useState(false);
   
-  // Initialize CSS custom property on mount
-  useEffect(() => {
-    // Set initial sidebar width CSS variable
-    document.documentElement.style.setProperty('--sidebar-width', '320px');
-  }, []);
-  
   // Handle sidebar resize state changes
   const handleSidebarResizeStateChange = useCallback((isResizing: boolean) => {
     setIsSidebarResizing(isResizing);
@@ -419,155 +413,137 @@ export default function Home() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="min-h-screen bg-gray-900">
-        {/* Header */}
-        <header className="bg-gray-800 border-b border-gray-700 shadow-sm">
-        <div 
-          className={`px-6 py-4 ${
-            isSidebarResizing ? '' : 'transition-all duration-300'
-          }`}
-          style={{ 
-            marginLeft: 'var(--sidebar-width)'
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                Visual Prompt Builder
-              </h1>
-              <p className="text-sm text-gray-400">
-                Build, organize, and version your LLM prompts
-              </p>
-            </div>
-            
-            {/* Header Actions */}
-            <div className="flex items-center gap-3">
-              {currentPrompt && (
-                <div className="text-sm text-gray-400">
-                  Current: <span className="font-medium text-white">{currentPrompt.title}</span>
-                </div>
-              )}
-              
-              <button
-                onClick={() => {
-                  const title = prompt('Enter prompt title:');
-                  if (title) {
-                    handleSavePrompt(title);
-                  }
-                }}
-                disabled={promptContent.length === 0}
-                className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
-                  promptContent.length > 0
-                    ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
-                    : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Save Prompt
-              </button>
-              
-              <button
-                onClick={() => {
-                  // TODO: Open prompt library modal
-                  console.log('Open prompt library');
-                }}
-                className="px-4 py-2 text-sm border border-gray-600 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Load Prompt
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main 
-        className={`flex h-[calc(100vh-88px)] min-h-0 ${
-          isSidebarResizing ? '' : 'transition-all duration-300'
-        }`}
-        style={{ 
-          marginLeft: 'var(--sidebar-width)'
-        }}
-      >
-        {/* Canvas Area */}
-        <TextEditorCanvas
-          promptContent={promptContent}
-          setPromptContent={setPromptContent}
+      <div className="flex h-screen bg-gray-900">
+        {/* Sidebar */}
+        <Sidebar
           variables={variables}
-          onVariablesChange={handleVariablesChange}
-          showPreview={showPreview}
-          onShowPreviewToggle={handleShowPreviewToggle}
           allVariables={allVariables}
-          blocks={blocks}
-          isLoading={isLoadingPrompt}
-          currentPrompt={currentPrompt}
-          onTitleChange={handleTitleChange}
+          onVariableChange={handleVariableChange}
+          prompts={prompts}
+          onPromptSelect={(prompt) => {
+            console.log('Selected prompt:', prompt);
+          }}
+          onPromptLoad={handlePromptLoad}
+          onPromptDelete={handlePromptDelete}
+          onResizeStateChange={handleSidebarResizeStateChange}
         />
+        
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <header className="bg-gray-800 border-b border-gray-700 shadow-sm flex-shrink-0">
+            <div className="px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-white">
+                    Visual Prompt Builder
+                  </h1>
+                  <p className="text-sm text-gray-400">
+                    Build, organize, and version your LLM prompts
+                  </p>
+                </div>
+                
+                {/* Header Actions */}
+                <div className="flex items-center gap-3">
+                  {currentPrompt && (
+                    <div className="text-sm text-gray-400">
+                      Current: <span className="font-medium text-white">{currentPrompt.title}</span>
+                    </div>
+                  )}
+                  
+                  <button
+                    onClick={() => {
+                      const title = prompt('Enter prompt title:');
+                      if (title) {
+                        handleSavePrompt(title);
+                      }
+                    }}
+                    disabled={promptContent.length === 0}
+                    className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
+                      promptContent.length > 0
+                        ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700'
+                        : 'border-gray-600 bg-gray-600 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Save Prompt
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // TODO: Open prompt library modal
+                      console.log('Open prompt library');
+                    }}
+                    className="px-4 py-2 text-sm border border-gray-600 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Load Prompt
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
 
-        {/* Block Library */}
-        <AdvancedBlockLibrary
-          blocks={blocks}
-          isLoading={isLoadingBlocks}
-          error={blocksError}
-          onBlockCreate={handleBlockCreate}
-          onBlockUpdate={handleBlockUpdate}
-          onBlockDelete={handleBlockDelete}
-          onRefresh={loadBlocks}
-        />
-      </main>
+          {/* Main Content */}
+          <main className="flex flex-1 min-h-0">
+            {/* Canvas Area */}
+            <TextEditorCanvas
+              promptContent={promptContent}
+              setPromptContent={setPromptContent}
+              variables={variables}
+              onVariablesChange={handleVariablesChange}
+              showPreview={showPreview}
+              onShowPreviewToggle={handleShowPreviewToggle}
+              allVariables={allVariables}
+              blocks={blocks}
+              isLoading={isLoadingPrompt}
+              currentPrompt={currentPrompt}
+              onTitleChange={handleTitleChange}
+            />
 
-      {/* Sidebar */}
-      <Sidebar
-        variables={variables}
-        allVariables={allVariables}
-        onVariableChange={handleVariableChange}
-        prompts={prompts}
-        onPromptSelect={(prompt) => {
-          console.log('Selected prompt:', prompt);
-        }}
-        onPromptLoad={handlePromptLoad}
-        onPromptDelete={handlePromptDelete}
-        onResizeStateChange={handleSidebarResizeStateChange}
-      />
+            {/* Block Library */}
+            <AdvancedBlockLibrary
+              blocks={blocks}
+              isLoading={isLoadingBlocks}
+              error={blocksError}
+              onBlockCreate={handleBlockCreate}
+              onBlockUpdate={handleBlockUpdate}
+              onBlockDelete={handleBlockDelete}
+              onRefresh={loadBlocks}
+            />
+          </main>
 
-      {/* Status Bar */}
-      <div 
-        className={`bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 ${
-          isSidebarResizing ? '' : 'transition-all duration-300'
-        }`}
-        style={{ 
-          marginLeft: 'var(--sidebar-width)'
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span>
-              {promptContent.length} element{promptContent.length !== 1 ? 's' : ''} in prompt
-            </span>
-            <span>•</span>
-            <span>
-              {promptContent.filter(el => el.type === 'block').length} block{promptContent.filter(el => el.type === 'block').length !== 1 ? 's' : ''}, {promptContent.filter(el => el.type === 'text').length} text
-            </span>
-            {Object.keys(variables).length > 0 && (
-              <>
+          {/* Status Bar */}
+          <div className="bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span>
+                  {promptContent.length} element{promptContent.length !== 1 ? 's' : ''} in prompt
+                </span>
                 <span>•</span>
                 <span>
-                  {Object.keys(variables).length} variable{Object.keys(variables).length !== 1 ? 's' : ''} set
+                  {promptContent.filter(el => el.type === 'block').length} block{promptContent.filter(el => el.type === 'block').length !== 1 ? 's' : ''}, {promptContent.filter(el => el.type === 'text').length} text
                 </span>
-              </>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <span>{blocks.length} blocks in library</span>
-            {currentPrompt && (
-              <>
-                <span>•</span>
-                <span>Saved as: {currentPrompt.title}</span>
-              </>
-            )}
+                {Object.keys(variables).length > 0 && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      {Object.keys(variables).length} variable{Object.keys(variables).length !== 1 ? 's' : ''} set
+                    </span>
+                  </>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <span>{blocks.length} blocks in library</span>
+                {currentPrompt && (
+                  <>
+                    <span>•</span>
+                    <span>Saved as: {currentPrompt.title}</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
       </div>
       
       <DragOverlay>

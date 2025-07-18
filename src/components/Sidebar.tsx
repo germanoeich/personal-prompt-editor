@@ -115,11 +115,7 @@ export function Sidebar({
     document.addEventListener('mouseup', handleMouseUp);
   }, [minWidth, maxWidth, onResizeStateChange]);
 
-  // Update CSS custom property when width or collapsed state changes
-  useEffect(() => {
-    const actualWidth = isCollapsed ? 60 : width;
-    document.documentElement.style.setProperty('--sidebar-width', `${actualWidth}px`);
-  }, [width, isCollapsed]);
+  // No longer need CSS custom properties - flexbox handles layout
 
   // Load saved width on mount
   useEffect(() => {
@@ -155,7 +151,7 @@ export function Sidebar({
   return (
     <div 
       ref={containerRef}
-      className={`fixed left-0 top-0 h-full bg-gray-800 border-r border-gray-700 flex flex-col z-50 group ${
+      className={`bg-gray-800 border-r border-gray-700 flex flex-col flex-shrink-0 group ${
         isResizing ? '' : 'transition-all duration-300'
       }`}
       style={{ width: `${sidebarWidth}px` }}

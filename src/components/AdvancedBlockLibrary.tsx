@@ -285,7 +285,7 @@ export function AdvancedBlockLibrary({
   return (
     <div 
       ref={containerRef}
-      className="border-l border-gray-700 bg-gray-800 flex flex-col relative group"
+      className="border-l border-gray-700 bg-gray-800 flex flex-col flex-shrink-0 relative group"
       style={{ width: `${width}px` }}
     >
       {/* Resize Handle */}
