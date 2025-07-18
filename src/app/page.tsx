@@ -18,13 +18,18 @@ export default function Home() {
   const [activeBlock, setActiveBlock] = useState<Block | null>(null);
   
   // Dynamic widths state
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarWidth');
-      return saved ? parseInt(saved, 10) : 320;
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  
+  // Load saved sidebar width on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebarWidth');
+    if (saved) {
+      const savedWidth = parseInt(saved, 10);
+      if (savedWidth >= 240 && savedWidth <= 480) {
+        setSidebarWidth(savedWidth);
+      }
     }
-    return 320;
-  });
+  }, []);
   
   // Handle sidebar width changes
   const handleSidebarWidthChange = useCallback((newWidth: number) => {

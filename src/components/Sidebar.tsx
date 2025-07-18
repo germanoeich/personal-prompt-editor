@@ -45,13 +45,7 @@ export function Sidebar({
   onWidthChange,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [width, setWidth] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarWidth');
-      return saved ? parseInt(saved, 10) : 320;
-    }
-    return 320;
-  });
+  const [width, setWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const minWidth = 240; // Minimum sidebar width
@@ -97,19 +91,33 @@ export function Sidebar({
       const deltaX = e.clientX - startX;
       const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + deltaX));
       setWidth(newWidth);
-      localStorage.setItem('sidebarWidth', newWidth.toString());
       onWidthChange?.(newWidth);
     };
     
     const handleMouseUp = () => {
       setIsResizing(false);
+      // Save to localStorage only when resize is complete
+      const finalWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + (document.body.style.cursor === 'col-resize' ? 0 : 0)));
+      localStorage.setItem('sidebarWidth', width.toString());
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [width, minWidth, maxWidth]);
+  }, [width, minWidth, maxWidth, onWidthChange]);
+
+  // Load saved width on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebarWidth');
+    if (saved) {
+      const savedWidth = parseInt(saved, 10);
+      if (savedWidth >= minWidth && savedWidth <= maxWidth) {
+        setWidth(savedWidth);
+        onWidthChange?.(savedWidth);
+      }
+    }
+  }, [minWidth, maxWidth, onWidthChange]);
 
   // Prevent text selection during resize
   useEffect(() => {

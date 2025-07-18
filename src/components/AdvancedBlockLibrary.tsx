@@ -39,13 +39,7 @@ export function AdvancedBlockLibrary({
     type: undefined,
   });
   
-  const [width, setWidth] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('blockLibraryWidth');
-      return saved ? parseInt(saved, 10) : 320;
-    }
-    return 320;
-  });
+  const [width, setWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const minWidth = 256; // min-w-64
@@ -239,11 +233,12 @@ export function AdvancedBlockLibrary({
       const deltaX = startX - e.clientX; // Subtract because we're resizing from the left
       const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + deltaX));
       setWidth(newWidth);
-      localStorage.setItem('blockLibraryWidth', newWidth.toString());
     };
     
     const handleMouseUp = () => {
       setIsResizing(false);
+      // Save to localStorage only when resize is complete
+      localStorage.setItem('blockLibraryWidth', width.toString());
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -251,6 +246,17 @@ export function AdvancedBlockLibrary({
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   }, [width, minWidth, maxWidth]);
+
+  // Load saved width on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('blockLibraryWidth');
+    if (saved) {
+      const savedWidth = parseInt(saved, 10);
+      if (savedWidth >= minWidth && savedWidth <= maxWidth) {
+        setWidth(savedWidth);
+      }
+    }
+  }, [minWidth, maxWidth]);
 
   // Prevent text selection during resize
   useEffect(() => {
