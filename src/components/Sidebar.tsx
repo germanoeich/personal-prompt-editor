@@ -151,7 +151,7 @@ export function Sidebar({
   return (
     <div 
       ref={containerRef}
-      className={`bg-gray-800 border-r border-gray-700 flex flex-col flex-shrink-0 group ${
+      className={`bg-gray-800 border-r border-gray-700 flex flex-col flex-shrink-0 group relative ${
         isResizing ? '' : 'transition-all duration-300'
       }`}
       style={{ width: `${sidebarWidth}px` }}
