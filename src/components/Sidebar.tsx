@@ -24,6 +24,7 @@ interface SidebarProps {
   
   // Width callback
   onWidthChange?: (width: number) => void;
+  onResizeStateChange?: (isResizing: boolean) => void;
 }
 
 export interface SidebarPanel {
@@ -43,6 +44,7 @@ export function Sidebar({
   onPromptLoad,
   onPromptDelete,
   onWidthChange,
+  onResizeStateChange,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [width, setWidth] = useState(320);
@@ -89,6 +91,7 @@ export function Sidebar({
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(true);
+    onResizeStateChange?.(true);
     
     const startX = e.clientX;
     const startWidth = currentWidthRef.current;
@@ -104,6 +107,7 @@ export function Sidebar({
     
     const handleMouseUp = () => {
       setIsResizing(false);
+      onResizeStateChange?.(false);
       // Final save to ensure it's persisted
       localStorage.setItem('sidebarWidth', currentWidthRef.current.toString());
       document.removeEventListener('mousemove', handleMouseMove);
@@ -112,7 +116,7 @@ export function Sidebar({
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [minWidth, maxWidth, onWidthChange]);
+  }, [minWidth, maxWidth, onWidthChange, onResizeStateChange]);
 
   // Load saved width on mount
   useEffect(() => {
@@ -149,7 +153,9 @@ export function Sidebar({
   return (
     <div 
       ref={containerRef}
-      className="fixed left-0 top-0 h-full bg-gray-800 border-r border-gray-700 flex flex-col transition-all duration-300 z-50 group"
+      className={`fixed left-0 top-0 h-full bg-gray-800 border-r border-gray-700 flex flex-col z-50 group ${
+        isResizing ? '' : 'transition-all duration-300'
+      }`}
       style={{ width: `${sidebarWidth}px` }}
     >
       {/* Resize Handle */}

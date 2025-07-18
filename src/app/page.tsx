@@ -19,6 +19,7 @@ export default function Home() {
   
   // Dynamic widths state
   const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [isSidebarResizing, setIsSidebarResizing] = useState(false);
   
   // Load saved sidebar width on mount
   useEffect(() => {
@@ -34,6 +35,11 @@ export default function Home() {
   // Handle sidebar width changes
   const handleSidebarWidthChange = useCallback((newWidth: number) => {
     setSidebarWidth(newWidth);
+  }, []);
+  
+  // Handle sidebar resize state changes
+  const handleSidebarResizeStateChange = useCallback((isResizing: boolean) => {
+    setIsSidebarResizing(isResizing);
   }, []);
 
   // Block library state
@@ -428,7 +434,9 @@ export default function Home() {
         {/* Header */}
         <header className="bg-gray-800 border-b border-gray-700 shadow-sm">
         <div 
-          className="px-6 py-4 transition-all duration-300"
+          className={`px-6 py-4 ${
+            isSidebarResizing ? '' : 'transition-all duration-300'
+          }`}
           style={{ 
             marginLeft: `${sidebarWidth}px`
           }}
@@ -484,7 +492,9 @@ export default function Home() {
 
       {/* Main Content */}
       <main 
-        className="flex h-[calc(100vh-88px)] transition-all duration-300 min-h-0"
+        className={`flex h-[calc(100vh-88px)] min-h-0 ${
+          isSidebarResizing ? '' : 'transition-all duration-300'
+        }`}
         style={{ 
           marginLeft: `${sidebarWidth}px`
         }}
@@ -528,11 +538,14 @@ export default function Home() {
         onPromptLoad={handlePromptLoad}
         onPromptDelete={handlePromptDelete}
         onWidthChange={handleSidebarWidthChange}
+        onResizeStateChange={handleSidebarResizeStateChange}
       />
 
       {/* Status Bar */}
       <div 
-        className="bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 transition-all duration-300"
+        className={`bg-gray-800 border-t border-gray-700 px-6 py-2 text-sm text-gray-400 ${
+          isSidebarResizing ? '' : 'transition-all duration-300'
+        }`}
         style={{ 
           marginLeft: `${sidebarWidth}px`
         }}
