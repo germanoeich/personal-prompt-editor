@@ -18,7 +18,8 @@ export default function Home() {
   const [activeBlock, setActiveBlock] = useState<Block | null>(null);
   
   // Dynamic widths state
-  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarWidth, setSidebarWidth] = useState(320); // Expanded width
+  const [actualSidebarWidth, setActualSidebarWidth] = useState(320); // Actual rendered width
   const [isSidebarResizing, setIsSidebarResizing] = useState(false);
   
   // Load saved sidebar width on mount
@@ -28,6 +29,7 @@ export default function Home() {
       const savedWidth = parseInt(saved, 10);
       if (savedWidth >= 240 && savedWidth <= 480) {
         setSidebarWidth(savedWidth);
+        // Initial actual width will be set by the Sidebar component
       }
     }
   }, []);
@@ -40,6 +42,11 @@ export default function Home() {
   // Handle sidebar resize state changes
   const handleSidebarResizeStateChange = useCallback((isResizing: boolean) => {
     setIsSidebarResizing(isResizing);
+  }, []);
+  
+  // Handle actual sidebar width changes (including collapsed state)
+  const handleActualSidebarWidthChange = useCallback((actualWidth: number) => {
+    setActualSidebarWidth(actualWidth);
   }, []);
 
   // Block library state
@@ -438,7 +445,7 @@ export default function Home() {
             isSidebarResizing ? '' : 'transition-all duration-300'
           }`}
           style={{ 
-            marginLeft: `${sidebarWidth}px`
+            marginLeft: `${actualSidebarWidth}px`
           }}
         >
           <div className="flex items-center justify-between">
@@ -539,6 +546,7 @@ export default function Home() {
         onPromptDelete={handlePromptDelete}
         onWidthChange={handleSidebarWidthChange}
         onResizeStateChange={handleSidebarResizeStateChange}
+        onActualWidthChange={handleActualSidebarWidthChange}
       />
 
       {/* Status Bar */}
