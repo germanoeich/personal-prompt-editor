@@ -309,8 +309,8 @@ export default function Home() {
           : tab
       ));
       
-      // Refresh prompts list
-      loadPrompts();
+      // Refresh prompts list and wait for it to complete
+      await loadPrompts();
       
       console.log('Prompt saved successfully:', response.data);
     } catch (error) {
@@ -388,7 +388,7 @@ export default function Home() {
         }
 
         // Refresh prompts list to show updated title
-        loadPrompts();
+        await loadPrompts();
         
         console.log('Prompt title updated successfully');
       } catch (error) {
