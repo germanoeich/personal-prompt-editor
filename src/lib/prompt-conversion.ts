@@ -335,45 +335,6 @@ export function cleanTextFormat(text: string): string {
     .trim();
 }
 
-/**
- * Fix malformed content that has visible <text> or </text> tags
- * This is a migration function to clean up existing data
- */
-export function fixMalformedTags(content: string): string {
-  // First, try to parse the content normally
-  const parsed = parseTextToPromptContent(content);
-  
-  // Check if any text elements contain the literal tags
-  let needsFix = false;
-  const fixed = parsed.map(element => {
-    if (element.type === 'text' && element.content) {
-      // Check for orphaned opening or closing tags
-      if (element.content.includes('<text>') || element.content.includes('</text>') ||
-          element.content.includes('<block') || element.content.includes('</block>')) {
-        needsFix = true;
-        // Remove orphaned tags
-        return {
-          ...element,
-          content: element.content
-            .replace(/<text>/g, '')
-            .replace(/<\/text>/g, '')
-            .replace(/<block[^>]*>/g, '')
-            .replace(/<\/block>/g, '')
-            .trim()
-        };
-      }
-    }
-    return element;
-  });
-  
-  // If fixes were made, convert back to text format
-  if (needsFix) {
-    console.log('Fixed malformed tags in content');
-    return convertPromptContentToText(fixed);
-  }
-  
-  return content;
-}
 
 /**
  * Get statistics about a text format
