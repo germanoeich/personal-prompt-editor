@@ -1,8 +1,5 @@
 # Visual Prompt Builder
 
-> [!WARNING]
-> This project was 99% coded by AI with human guidance. There is NO SECURITY built in, DO NOT EXPOSE THIS TO THE INTERNET. 
-
 An IDE-like visual prompt management system for Large Language Models (LLMs) that enables users to create, organize, and manage reusable prompts through an intuitive drag-and-drop interface.
 
 <img width="1920" height="992" alt="image" src="https://github.com/user-attachments/assets/5d8d1a64-36d5-4b2a-8b6a-31c51bdfab8a" />
@@ -41,6 +38,9 @@ The system uses a custom XML-like format for storing prompt compositions:
 ```
 
 ## Getting Started
+
+> [!WARNING]
+> This project was 99% coded by AI with human guidance. There is NO SECURITY built in, DO NOT EXPOSE THIS TO THE INTERNET. 
 
 ### Prerequisites
 
