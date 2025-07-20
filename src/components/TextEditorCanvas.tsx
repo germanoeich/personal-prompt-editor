@@ -44,6 +44,7 @@ interface TextEditorCanvasProps {
   currentPrompt?: Prompt | null;
   onTitleChange?: (title: string) => void;
   onBlockCreate?: (blockData: any) => Promise<void>;
+  onBlockUpdate?: (id: number, updates: any) => Promise<void>;
   onSavePrompt?: (title: string) => Promise<void>;
   availableTags?: string[];
   availableCategories?: string[];
@@ -68,6 +69,7 @@ export function TextEditorCanvas({
   currentPrompt,
   onTitleChange,
   onBlockCreate,
+  onBlockUpdate,
   onSavePrompt,
   availableTags = [],
   availableCategories = [],
@@ -614,6 +616,16 @@ export function TextEditorCanvas({
                     onMoveUp={index > 0 ? () => moveElement(element.id, 'up') : undefined}
                     onMoveDown={index < sortedContent.length - 1 ? () => moveElement(element.id, 'down') : undefined}
                     onCreatePreset={handleCreatePresetFromBlock}
+                    onUpdateBlock={onBlockUpdate ? async (blockId, content) => {
+                      await onBlockUpdate(blockId, { content });
+                      // Update the local element's originalBlock content
+                      updateElement(element.id, {
+                        originalBlock: {
+                          ...element.originalBlock!,
+                          content
+                        }
+                      });
+                    } : undefined}
                   />
                 )}
 

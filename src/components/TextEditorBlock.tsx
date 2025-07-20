@@ -26,6 +26,7 @@ interface TextEditorBlockProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onCreatePreset?: (content: string, title: string) => void;
+  onUpdateBlock?: (blockId: number, content: string) => Promise<void>;
 }
 
 export function TextEditorBlock({
@@ -39,9 +40,11 @@ export function TextEditorBlock({
   onMoveUp,
   onMoveDown,
   onCreatePreset,
+  onUpdateBlock,
 }: TextEditorBlockProps) {
   const [editContent, setEditContent] = useState('');
   const [isButtonClick, setIsButtonClick] = useState(false);
+  const [isSavingToPreset, setIsSavingToPreset] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset edit content when editing starts
@@ -103,6 +106,22 @@ export function TextEditorBlock({
   const handleButtonClick = (callback: () => void) => {
     setIsButtonClick(true);
     callback();
+  };
+
+  const handleSaveToPreset = async () => {
+    if (!onUpdateBlock || !element.originalBlock || !element.overrideContent) return;
+    
+    setIsSavingToPreset(true);
+    try {
+      await onUpdateBlock(element.originalBlock.id, element.overrideContent);
+      // After successful save, reset the override
+      onReset();
+    } catch (error) {
+      console.error('Failed to save override to preset:', error);
+      // TODO: Show error notification
+    } finally {
+      setIsSavingToPreset(false);
+    }
   };
 
   const displayContent = element.isOverridden ? element.overrideContent : element.originalBlock?.content;
@@ -281,12 +300,24 @@ export function TextEditorBlock({
             <span className="text-xs text-orange-300">
               This block has been overridden
             </span>
-            <button
-              onClick={onReset}
-              className="text-xs text-orange-400 hover:text-orange-300 underline"
-            >
-              Reset to original
-            </button>
+            <div className="flex items-center gap-3">
+              {onUpdateBlock && element.originalBlock && (
+                <button
+                  onClick={handleSaveToPreset}
+                  disabled={isSavingToPreset}
+                  className="text-xs text-green-400 hover:text-green-300 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Update the preset block with your override content"
+                >
+                  {isSavingToPreset ? 'Saving...' : 'Save to preset'}
+                </button>
+              )}
+              <button
+                onClick={onReset}
+                className="text-xs text-orange-400 hover:text-orange-300 underline"
+              >
+                Reset to original
+              </button>
+            </div>
           </div>
         </div>
       )}

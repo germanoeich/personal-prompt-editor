@@ -644,6 +644,7 @@ export default function Home() {
                 currentPrompt={currentPrompt}
                 onTitleChange={handleTitleChange}
                 onBlockCreate={handleBlockCreate}
+                onBlockUpdate={handleBlockUpdate}
                 onSavePrompt={handleSavePrompt}
                 availableTags={blocks.flatMap(block => block.tags).filter((tag, index, arr) => arr.indexOf(tag) === index)}
                 availableCategories={blocks.flatMap(block => block.categories).filter((cat, index, arr) => arr.indexOf(cat) === index)}

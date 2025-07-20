@@ -57,14 +57,14 @@ export function Sidebar({
 
   const tabs: SidebarTab[] = [
     {
-      id: "variables",
-      title: "Variables",
-      icon: VariableIcon,
-    },
-    {
       id: "prompts",
       title: "My Prompts",
       icon: DocumentTextIcon,
+    },
+    {
+      id: "variables",
+      title: "Variables",
+      icon: VariableIcon,
     },
   ];
 
