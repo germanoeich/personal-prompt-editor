@@ -82,6 +82,7 @@ export function TextEditorCanvas({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createModalPrefill, setCreateModalPrefill] = useState<any>(null);
+  const [convertingElementId, setConvertingElementId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync title value with active tab
@@ -296,13 +297,14 @@ export function TextEditorCanvas({
   }, [addBlockElement]);
 
   // Create preset handlers
-  const handleCreatePresetFromText = useCallback((content: string) => {
+  const handleCreatePresetFromText = useCallback((content: string, elementId: string) => {
     setCreateModalPrefill({
       title: 'Text Block',
       content,
       tags: [],
       categories: [],
     });
+    setConvertingElementId(elementId);
     setIsCreateModalOpen(true);
   }, []);
 
@@ -319,14 +321,42 @@ export function TextEditorCanvas({
   const handleCreateBlock = useCallback(async (blockData: any) => {
     if (onBlockCreate) {
       try {
-        await onBlockCreate(blockData);
+        // Create the new block
+        const response = await onBlockCreate(blockData);
         setIsCreateModalOpen(false);
         setCreateModalPrefill(null);
+        
+        // If we're converting a text element to a preset, replace it
+        if (convertingElementId && response) {
+          // Find the position of the element being converted
+          const elementIndex = promptContent.findIndex(el => el.id === convertingElementId);
+          if (elementIndex !== -1) {
+            const elementOrder = promptContent[elementIndex].order;
+            
+            // Remove the old text element
+            const updatedContent = promptContent.filter(el => el.id !== convertingElementId);
+            
+            // Add the new block element at the same position
+            const newBlockElement = {
+              id: generateElementId('block'),
+              type: 'block' as const,
+              order: elementOrder,
+              blockId: response.id,
+              blockType: 'preset' as const,
+              originalBlock: response,
+              isOverridden: false,
+              overrideContent: undefined,
+            };
+            
+            setPromptContent([...updatedContent, newBlockElement].sort((a, b) => a.order - b.order));
+          }
+          setConvertingElementId(null);
+        }
       } catch (error) {
         console.error('Failed to create block:', error);
       }
     }
-  }, [onBlockCreate]);
+  }, [onBlockCreate, convertingElementId, promptContent, setPromptContent]);
 
   // Title editing handlers
   const handleTitleClick = useCallback(() => {
@@ -559,7 +589,7 @@ export function TextEditorCanvas({
                     onMoveDown={index < sortedContent.length - 1 ? () => moveElement(element.id, 'down') : undefined}
                     onFocus={() => setFocusedElementId(element.id)}
                     onBlur={() => setFocusedElementId(null)}
-                    onCreatePreset={handleCreatePresetFromText}
+                    onCreatePreset={(content) => handleCreatePresetFromText(content, element.id)}
                   />
                 ) : (
                   <TextEditorBlock
@@ -629,6 +659,7 @@ export function TextEditorCanvas({
           onClose={() => {
             setIsCreateModalOpen(false);
             setCreateModalPrefill(null);
+            setConvertingElementId(null);
           }}
           onCreate={handleCreateBlock}
           availableTags={availableTags}

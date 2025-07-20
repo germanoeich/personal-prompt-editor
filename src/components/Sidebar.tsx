@@ -197,19 +197,19 @@ export function Sidebar({
 
           {/* Tab Content */}
           <div className="flex-1 flex flex-col min-h-0">
-            {activeTab === "variables" && (
-              <SidebarVariablesPanel
-                variables={variables}
-                allVariables={allVariables}
-                onVariableChange={onVariableChange}
-              />
-            )}
             {activeTab === "prompts" && (
               <SidebarPromptsPanel
                 prompts={prompts}
                 onPromptSelect={onPromptSelect}
                 onPromptLoad={onPromptLoad}
                 onPromptDelete={onPromptDelete}
+              />
+            )}
+            {activeTab === "variables" && (
+              <SidebarVariablesPanel
+                variables={variables}
+                allVariables={allVariables}
+                onVariableChange={onVariableChange}
               />
             )}
           </div>

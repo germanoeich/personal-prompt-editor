@@ -199,6 +199,7 @@ export default function Home() {
 
       const newBlock = await response.json();
       setBlocks(prev => [newBlock, ...prev]);
+      return newBlock; // Return the created block
     } catch (error) {
       console.error('Error creating block:', error);
       throw error;
