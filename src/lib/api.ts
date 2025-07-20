@@ -218,8 +218,11 @@ export const apiHelpers = {
     
     // If we have content_text, use that
     if (prompt.content_text) {
-      const { parseTextToPromptContent } = await import('./prompt-conversion');
-      const promptContent = parseTextToPromptContent(prompt.content_text);
+      const { parseTextToPromptContent, fixMalformedTags } = await import('./prompt-conversion');
+      
+      // Fix any malformed tags before parsing
+      const cleanedContent = fixMalformedTags(prompt.content_text);
+      const promptContent = parseTextToPromptContent(cleanedContent);
       
       // Fetch block data for any block elements
       const blockElements = promptContent.filter(el => el.type === 'block');

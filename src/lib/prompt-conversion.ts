@@ -71,23 +71,31 @@ export function parseTextToPromptContent(text: string): PromptContent {
   const content: PromptContent = [];
   let order = 0;
   
-  // Split by double newlines to get sections
-  const sections = text.split(/\n\n+/);
+  // More robust parsing using a single regex to find all tags
+  const tagRegex = /<text>([\s\S]*?)<\/text>|<block\s+id="?(\d+)"?\s*\/>|<block\s+id="?(\d+)"?\s*>([\s\S]*?)<\/block>/g;
+  let lastIndex = 0;
+  let match;
   
-  sections.forEach(section => {
-    const trimmedSection = section.trim();
-    if (!trimmedSection) return;
+  while ((match = tagRegex.exec(text)) !== null) {
+    // Check if there's content before this tag
+    if (match.index > lastIndex) {
+      const beforeContent = text.substring(lastIndex, match.index).trim();
+      if (beforeContent) {
+        // This is orphaned text that should be treated as a text element
+        console.warn('Found orphaned text outside of tags:', beforeContent);
+        const textElement: PromptTextElement = {
+          id: generateElementId('text'),
+          type: 'text',
+          order: order++,
+          content: beforeContent,
+        };
+        content.push(textElement);
+      }
+    }
     
-    // Check if it's a text tag
-    const textMatch = trimmedSection.match(/^<text>([\s\S]*?)<\/text>$/);
-    
-    // Check if it's a block tag
-    const blockMatch = trimmedSection.match(/^<block\s+id="?(\d+)"?\s*\/?>$/);
-    const blockWithContentMatch = trimmedSection.match(/^<block\s+id="?(\d+)"?\s*>([\s\S]*?)<\/block>$/);
-    
-    if (textMatch) {
+    if (match[1] !== undefined) {
       // Text tag: <text>content</text>
-      const textContent = unescapeTextContent(textMatch[1]);
+      const textContent = unescapeTextContent(match[1]);
       const textElement: PromptTextElement = {
         id: generateElementId('text'),
         type: 'text',
@@ -95,9 +103,9 @@ export function parseTextToPromptContent(text: string): PromptContent {
         content: textContent,
       };
       content.push(textElement);
-    } else if (blockMatch) {
+    } else if (match[2] !== undefined) {
       // Self-closing block tag: <block id="123" />
-      const blockId = parseInt(blockMatch[1]);
+      const blockId = parseInt(match[2]);
       const blockElement: PromptBlockElement = {
         id: generateElementId('block'),
         type: 'block',
@@ -108,10 +116,10 @@ export function parseTextToPromptContent(text: string): PromptContent {
         overrideContent: undefined,
       };
       content.push(blockElement);
-    } else if (blockWithContentMatch) {
+    } else if (match[3] !== undefined && match[4] !== undefined) {
       // Block with content: <block id="123">content</block>
-      const blockId = parseInt(blockWithContentMatch[1]);
-      const overrideContent = unescapeTextContent(blockWithContentMatch[2]);
+      const blockId = parseInt(match[3]);
+      const overrideContent = unescapeTextContent(match[4]);
       
       const blockElement: PromptBlockElement = {
         id: generateElementId('block'),
@@ -123,18 +131,37 @@ export function parseTextToPromptContent(text: string): PromptContent {
         overrideContent,
       };
       content.push(blockElement);
-    } else {
-      // Fallback for legacy format or unrecognized content - treat as plain text
-      console.warn('Unrecognized content format, treating as plain text:', trimmedSection);
+    }
+    
+    lastIndex = tagRegex.lastIndex;
+  }
+  
+  // Check for any content after the last tag
+  if (lastIndex < text.length) {
+    const afterContent = text.substring(lastIndex).trim();
+    if (afterContent) {
+      console.warn('Found orphaned text after last tag:', afterContent);
       const textElement: PromptTextElement = {
         id: generateElementId('text'),
         type: 'text',
         order: order++,
-        content: trimmedSection,
+        content: afterContent,
       };
       content.push(textElement);
     }
-  });
+  }
+  
+  // If no valid tags were found, treat the entire content as plain text
+  if (content.length === 0 && text.trim()) {
+    console.warn('No valid tags found, treating entire content as plain text');
+    const textElement: PromptTextElement = {
+      id: generateElementId('text'),
+      type: 'text',
+      order: 0,
+      content: text.trim(),
+    };
+    content.push(textElement);
+  }
   
   return content;
 }
@@ -306,6 +333,46 @@ export function cleanTextFormat(text: string): string {
     .replace(/\r\n/g, '\n') // Normalize line endings
     .replace(/\n{3,}/g, '\n\n') // Limit consecutive newlines to 2
     .trim();
+}
+
+/**
+ * Fix malformed content that has visible <text> or </text> tags
+ * This is a migration function to clean up existing data
+ */
+export function fixMalformedTags(content: string): string {
+  // First, try to parse the content normally
+  const parsed = parseTextToPromptContent(content);
+  
+  // Check if any text elements contain the literal tags
+  let needsFix = false;
+  const fixed = parsed.map(element => {
+    if (element.type === 'text' && element.content) {
+      // Check for orphaned opening or closing tags
+      if (element.content.includes('<text>') || element.content.includes('</text>') ||
+          element.content.includes('<block') || element.content.includes('</block>')) {
+        needsFix = true;
+        // Remove orphaned tags
+        return {
+          ...element,
+          content: element.content
+            .replace(/<text>/g, '')
+            .replace(/<\/text>/g, '')
+            .replace(/<block[^>]*>/g, '')
+            .replace(/<\/block>/g, '')
+            .trim()
+        };
+      }
+    }
+    return element;
+  });
+  
+  // If fixes were made, convert back to text format
+  if (needsFix) {
+    console.log('Fixed malformed tags in content');
+    return convertPromptContentToText(fixed);
+  }
+  
+  return content;
 }
 
 /**
