@@ -110,7 +110,7 @@ export function TextEditorText({
   return (
     <div 
       data-text-editor
-      className={`relative group rounded-lg border-2 border-dashed transition-all ${
+      className={`relative group rounded-lg border-2 border-dashed transition-all mt-3 ${
         isEmpty 
           ? 'border-gray-600 bg-gray-800/50' 
           : 'border-transparent bg-gray-800'
@@ -119,7 +119,7 @@ export function TextEditorText({
       onMouseLeave={onBlur}
     >
       {/* Action Bar */}
-      <div className={`absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 ${
+      <div className={`absolute -top-3 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-gray-800 px-1 py-0.5 rounded ${
         isEmpty ? 'opacity-100' : ''
       }`}>
         {!isEditing && (
