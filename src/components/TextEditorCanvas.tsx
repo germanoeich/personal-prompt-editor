@@ -581,6 +581,9 @@ export function TextEditorCanvas({
                     isEditing={editingElementId === element.id}
                     isFocused={focusedElementId === element.id}
                     onEdit={() => setEditingElementId(element.id)}
+                    onChange={(content) => {
+                      updateElement(element.id, { content });
+                    }}
                     onSave={(content) => {
                       updateElement(element.id, { content });
                       setEditingElementId(null);
@@ -598,6 +601,12 @@ export function TextEditorCanvas({
                     element={element}
                     isEditing={editingElementId === element.id}
                     onEdit={() => setEditingElementId(element.id)}
+                    onChange={(overrideContent) => {
+                      updateElement(element.id, { 
+                        isOverridden: true, 
+                        overrideContent 
+                      });
+                    }}
                     onSave={(overrideContent) => {
                       updateElement(element.id, { 
                         isOverridden: true, 

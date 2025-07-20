@@ -17,6 +17,7 @@ interface TextEditorTextProps {
   isEditing: boolean;
   isFocused: boolean;
   onEdit: () => void;
+  onChange?: (content: string) => void;
   onSave: (content: string) => void;
   onCancel: () => void;
   onDelete: () => void;
@@ -32,6 +33,7 @@ export function TextEditorText({
   isEditing,
   isFocused,
   onEdit,
+  onChange,
   onSave,
   onCancel,
   onDelete,
@@ -64,7 +66,14 @@ export function TextEditorText({
 
   // Handle textarea auto-resize
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditContent(e.target.value);
+    const newContent = e.target.value;
+    setEditContent(newContent);
+    
+    // Update parent state immediately if onChange is provided
+    if (onChange) {
+      onChange(newContent);
+    }
+    
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
   };

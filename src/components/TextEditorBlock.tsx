@@ -19,6 +19,7 @@ interface TextEditorBlockProps {
   element: PromptBlockElement;
   isEditing: boolean;
   onEdit: () => void;
+  onChange?: (overrideContent: string) => void;
   onSave: (overrideContent: string) => void;
   onCancel: () => void;
   onReset: () => void;
@@ -33,6 +34,7 @@ export function TextEditorBlock({
   element,
   isEditing,
   onEdit,
+  onChange,
   onSave,
   onCancel,
   onReset,
@@ -66,7 +68,14 @@ export function TextEditorBlock({
 
   // Handle textarea auto-resize
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditContent(e.target.value);
+    const newContent = e.target.value;
+    setEditContent(newContent);
+    
+    // Update parent state immediately if onChange is provided
+    if (onChange) {
+      onChange(newContent);
+    }
+    
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
