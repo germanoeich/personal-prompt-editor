@@ -28,6 +28,7 @@ export default function Home() {
   // Tab state
   const [tabs, setTabs] = useState<PromptTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [hasRestoredTabs, setHasRestoredTabs] = useState(false);
 
   // Core state (for backward compatibility - will refactor later)
   const [activeBlock, setActiveBlock] = useState<Block | null>(null);
@@ -109,6 +110,26 @@ export default function Home() {
     }
   }, []);
 
+  // Save tabs to localStorage whenever they change
+  useEffect(() => {
+    if (hasRestoredTabs) {
+      if (tabs.length > 0) {
+        const tabsToSave = tabs.map(tab => ({
+          id: tab.id,
+          promptId: tab.promptId,
+          title: tab.title,
+          isNew: tab.isNew,
+        }));
+        localStorage.setItem('openTabs', JSON.stringify(tabsToSave));
+        localStorage.setItem('activeTabId', activeTabId || '');
+      } else {
+        // Clear localStorage when all tabs are closed
+        localStorage.removeItem('openTabs');
+        localStorage.removeItem('activeTabId');
+      }
+    }
+  }, [tabs, activeTabId, hasRestoredTabs]);
+
   // Initialize application
   useEffect(() => {
     const initializeApp = async () => {
@@ -122,6 +143,79 @@ export default function Home() {
 
     initializeApp();
   }, [loadBlocks, loadPrompts]);
+
+  // Restore tabs from localStorage after prompts are loaded
+  useEffect(() => {
+    const restoreTabs = async () => {
+      if (hasRestoredTabs || prompts.length === 0 || isLoadingPrompts) return;
+
+      try {
+        const savedTabs = localStorage.getItem('openTabs');
+        const savedActiveTabId = localStorage.getItem('activeTabId');
+
+        if (savedTabs) {
+          const parsedTabs = JSON.parse(savedTabs);
+          const restoredTabs: PromptTab[] = [];
+
+          for (const savedTab of parsedTabs) {
+            if (savedTab.isNew) {
+              // Restore new unsaved tabs
+              restoredTabs.push({
+                id: savedTab.id,
+                promptId: null,
+                title: savedTab.title || 'New Prompt',
+                content: [],
+                variables: {},
+                isDirty: false,
+                isNew: true,
+              });
+            } else if (savedTab.promptId) {
+              // Check if prompt still exists
+              const prompt = prompts.find(p => p.id === savedTab.promptId);
+              if (prompt) {
+                // Load the prompt content
+                try {
+                  const { apiHelpers } = await import("@/lib/api");
+                  const result = await apiHelpers.loadPromptAsContent(savedTab.promptId);
+                  
+                  if (result) {
+                    restoredTabs.push({
+                      id: savedTab.id,
+                      promptId: savedTab.promptId,
+                      title: prompt.title,
+                      content: result.promptContent,
+                      variables: result.variables,
+                      isDirty: false,
+                      isNew: false,
+                    });
+                  }
+                } catch (error) {
+                  console.error(`Failed to load prompt ${savedTab.promptId}:`, error);
+                }
+              }
+            }
+          }
+
+          if (restoredTabs.length > 0) {
+            setTabs(restoredTabs);
+            
+            // Restore active tab if it exists
+            if (savedActiveTabId && restoredTabs.some(tab => tab.id === savedActiveTabId)) {
+              setActiveTabId(savedActiveTabId);
+            } else {
+              setActiveTabId(restoredTabs[0].id);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to restore tabs from localStorage:", error);
+      } finally {
+        setHasRestoredTabs(true);
+      }
+    };
+
+    restoreTabs();
+  }, [prompts, isLoadingPrompts, hasRestoredTabs]);
 
   // Tab management functions
   const createNewTab = useCallback(() => {
