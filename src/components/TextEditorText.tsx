@@ -110,7 +110,7 @@ export function TextEditorText({
   return (
     <div 
       data-text-editor
-      className={`relative group rounded-lg border-2 border-dashed transition-all mt-3 ${
+      className={`relative group rounded-lg border-2 border-dashed transition-all ${
         isEmpty 
           ? 'border-gray-600 bg-gray-800/50' 
           : 'border-transparent bg-gray-800'
@@ -119,7 +119,7 @@ export function TextEditorText({
       onMouseLeave={onBlur}
     >
       {/* Action Bar */}
-      <div className={`absolute -top-3 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-gray-800 px-1 py-0.5 rounded ${
+      <div className={`absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 ${
         isEmpty ? 'opacity-100' : ''
       }`}>
         {!isEditing && (
@@ -194,7 +194,7 @@ export function TextEditorText({
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="px-4 pb-4 pt-8">
         {isEditing ? (
           <textarea
             ref={textareaRef}
