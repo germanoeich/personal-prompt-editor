@@ -193,15 +193,6 @@ export function TextEditorBlock({
                     <PencilIcon className="w-3 h-3" />
                   </button>
                   
-                  {element.isOverridden && (
-                    <button
-                      onClick={onReset}
-                      className="p-1 text-gray-400 hover:text-orange-400 hover:bg-gray-700 rounded transition-colors"
-                      title="Reset to original"
-                    >
-                      <ArrowPathIcon className="w-3 h-3" />
-                    </button>
-                  )}
 
                   {onCreatePreset && element.isOverridden && element.overrideContent?.trim() && (
                     <button
