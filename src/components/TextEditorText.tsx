@@ -11,6 +11,7 @@ import {
   BookmarkIcon,
 } from '@heroicons/react/24/outline';
 import { PromptTextElement } from '@/types';
+import { extractVariables } from '@/lib/variables';
 
 interface TextEditorTextProps {
   element: PromptTextElement;
@@ -106,123 +107,158 @@ export function TextEditorText({
   };
 
   const isEmpty = !element.content.trim();
+  const variables = extractVariables(element.content);
 
   return (
     <div 
       data-text-editor
-      className={`relative group rounded-lg border-2 border-dashed transition-all ${
+      className={`relative group rounded-lg border transition-all ${
         isEmpty 
           ? 'border-gray-600 bg-gray-800/50' 
-          : 'border-transparent bg-gray-800'
+          : 'border-gray-500 bg-gray-900/10'
       } ${isFocused ? 'ring-2 ring-blue-500' : ''}`}
       onMouseEnter={onFocus}
       onMouseLeave={onBlur}
     >
-      {/* Action Bar */}
-      <div className={`absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 ${
-        isEmpty ? 'opacity-100' : ''
+      {/* Header */}
+      <div className={`px-4 py-2 border-b ${
+        isEmpty
+          ? 'border-gray-600/30 bg-gray-800/20'
+          : 'border-gray-500/30 bg-gray-900/20'
       }`}>
-        {!isEditing && (
-          <>
-            <button
-              onClick={onEdit}
-              className="p-1 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              title="Edit text"
-            >
-              <PencilIcon className="w-3 h-3" />
-            </button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-medium text-white">
+              Text Block
+            </h3>
+            <span className="px-2 py-0.5 text-xs rounded-full bg-gray-700 text-gray-300">
+              text
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {/* Variables */}
+            {variables.length > 0 && (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400">Variables:</span>
+                <div className="flex gap-1">
+                  {variables.slice(0, 3).map((variable, index) => (
+                    <span
+                      key={index}
+                      className="px-1.5 py-0.5 text-xs bg-green-900/30 text-green-300 rounded"
+                    >
+                      {variable}
+                    </span>
+                  ))}
+                  {variables.length > 3 && (
+                    <span className="text-xs text-gray-400">+{variables.length - 3}</span>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1">
+            {!isEditing && (
+              <>
+                <button
+                  onClick={onEdit}
+                  className="p-1 text-gray-400 hover:text-blue-400 hover:bg-gray-700 rounded transition-colors"
+                  title="Edit text"
+                >
+                  <PencilIcon className="w-3 h-3" />
+                </button>
 
-            {onCreatePreset && element.content.trim() && (
-              <button
-                onClick={() => onCreatePreset(element.content)}
-                className="p-1 text-gray-400 hover:text-green-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-                title="Create preset from this text"
-              >
-                <BookmarkIcon className="w-3 h-3" />
-              </button>
+                {onCreatePreset && element.content.trim() && (
+                  <button
+                    onClick={() => onCreatePreset(element.content)}
+                    className="p-1 text-gray-400 hover:text-green-400 hover:bg-gray-700 rounded transition-colors"
+                    title="Create preset from this text"
+                  >
+                    <BookmarkIcon className="w-3 h-3" />
+                  </button>
+                )}
+                
+                {onMoveUp && (
+                  <button
+                    onClick={onMoveUp}
+                    className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors"
+                    title="Move up"
+                  >
+                    <ChevronUpIcon className="w-3 h-3" />
+                  </button>
+                )}
+                
+                {onMoveDown && (
+                  <button
+                    onClick={onMoveDown}
+                    className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors"
+                    title="Move down"
+                  >
+                    <ChevronDownIcon className="w-3 h-3" />
+                  </button>
+                )}
+                
+                <button
+                  onClick={onDelete}
+                  className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                  title="Delete text block"
+                >
+                  <TrashIcon className="w-3 h-3" />
+                </button>
+              </>
             )}
             
-            {onMoveUp && (
-              <button
-                onClick={onMoveUp}
-                className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-                title="Move up"
-              >
-                <ChevronUpIcon className="w-3 h-3" />
-              </button>
+            {isEditing && (
+              <>
+                <button
+                  onClick={() => handleButtonClick(handleSave)}
+                  className="p-1 text-green-400 hover:text-green-300 hover:bg-gray-700 rounded transition-colors"
+                  title="Save (Ctrl+Enter)"
+                >
+                  <CheckIcon className="w-3 h-3" />
+                </button>
+                
+                <button
+                  onClick={() => handleButtonClick(onCancel)}
+                  className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors"
+                  title="Cancel (Esc)"
+                >
+                  <XMarkIcon className="w-3 h-3" />
+                </button>
+              </>
             )}
-            
-            {onMoveDown && (
-              <button
-                onClick={onMoveDown}
-                className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-                title="Move down"
-              >
-                <ChevronDownIcon className="w-3 h-3" />
-              </button>
-            )}
-            
-            <button
-              onClick={onDelete}
-              className="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              title="Delete text block"
-            >
-              <TrashIcon className="w-3 h-3" />
-            </button>
-          </>
-        )}
-        
-        {isEditing && (
-          <>
-            <button
-              onClick={() => handleButtonClick(handleSave)}
-              className="p-1 text-green-400 hover:text-green-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              title="Save (Ctrl+Enter)"
-            >
-              <CheckIcon className="w-3 h-3" />
-            </button>
-            
-            <button
-              onClick={() => handleButtonClick(onCancel)}
-              className="p-1 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-colors shadow-sm"
-              title="Cancel (Esc)"
-            >
-              <XMarkIcon className="w-3 h-3" />
-            </button>
-          </>
-        )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-4 pt-8">
+      <div className="p-4">
         {isEditing ? (
-          <textarea
-            ref={textareaRef}
-            value={editContent}
-            onChange={handleTextareaChange}
-            onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
-            className="w-full bg-transparent text-gray-100 border-none outline-none resize-none placeholder-gray-500 text-sm leading-relaxed"
-            placeholder="Type your text here... Use {{variable}} for dynamic content"
-            style={{ minHeight: '60px' }}
-          />
+          <div className="space-y-3">
+            <textarea
+              ref={textareaRef}
+              value={editContent}
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
+              className="w-full bg-gray-800 text-gray-100 border border-gray-600 rounded-md p-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm leading-relaxed"
+              placeholder="Type your text here... Use {{variable}} for dynamic content"
+              style={{ minHeight: '80px' }}
+            />
+            
+            <div className="text-xs text-gray-400 space-y-1">
+              <p>• Use <code className="bg-gray-700 px-1 rounded">{'{{variable}}'}</code> for dynamic content</p>
+              <p>• Save with <kbd className="bg-gray-700 px-1 rounded">Ctrl+Enter</kbd> or Cancel with <kbd className="bg-gray-700 px-1 rounded">Esc</kbd></p>
+            </div>
+          </div>
         ) : (
           <div 
-            className={`text-sm leading-relaxed cursor-text ${
-              isEmpty 
-                ? 'text-gray-500 italic' 
-                : 'text-gray-200'
-            }`}
+            className="text-sm leading-relaxed text-gray-200 cursor-text whitespace-pre-wrap"
             onClick={onEdit}
           >
-            {isEmpty ? (
-              <div className="flex items-center gap-2">
-                <PencilIcon className="w-4 h-4" />
-                Click to add text...
-              </div>
-            ) : (
-              <div className="whitespace-pre-wrap">{element.content}</div>
-            )}
+            {isEmpty ? 'Click to add text...' : element.content}
           </div>
         )}
       </div>
