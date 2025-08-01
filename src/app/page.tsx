@@ -11,13 +11,14 @@ import {
   DragOverlay,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 import {
-  CanvasBlock,
   Block,
   Prompt,
   PromptContent,
-  PromptTextElement,
   PromptTab,
+  CreateBlockRequest,
+  UpdateBlockRequest,
 } from "@/types";
 import { TextEditorCanvas } from "@/components/TextEditorCanvas";
 import { Sidebar } from "@/components/Sidebar";
@@ -45,16 +46,14 @@ export default function Home() {
 
   // Get active tab data (now prompts is available)
   const activeTab = tabs.find((tab) => tab.id === activeTabId);
-  const promptContent = activeTab?.content || [];
-  const variables = activeTab?.variables || {};
+  const promptContent = useMemo(() => activeTab?.content || [], [activeTab?.content]);
+  const variables = useMemo(() => activeTab?.variables || {}, [activeTab?.variables]);
   const currentPrompt =
     activeTab && !activeTab.isNew && activeTab.promptId
       ? prompts.find((p) => p.id === activeTab.promptId) || null
       : null;
 
   // Resize state for disabling transitions
-  const [isSidebarResizing, setIsSidebarResizing] = useState(false);
-  const [isRightSidebarResizing, setIsRightSidebarResizing] = useState(false);
 
   // Handle sidebar resize state changes
   const handleSidebarResizeStateChange = useCallback((isResizing: boolean) => {
@@ -305,21 +304,38 @@ export default function Home() {
     [tabs, activeTabId]
   );
 
-  const updateActiveTab = useCallback(
-    (updates: Partial<PromptTab>) => {
+  // Update prompt content for the active tab
+  const setPromptContent = useCallback(
+    (
+      contentOrUpdater: PromptContent | ((prev: PromptContent) => PromptContent)
+    ) => {
       if (!activeTabId) return;
 
       setTabs((prev) =>
-        prev.map((tab) =>
-          tab.id === activeTabId ? { ...tab, ...updates } : tab
-        )
+        prev.map((tab) => {
+          if (tab.id === activeTabId) {
+            const newContent =
+              typeof contentOrUpdater === "function"
+                ? contentOrUpdater(tab.content)
+                : contentOrUpdater;
+            // Only mark as dirty if content actually changed
+            const contentChanged =
+              JSON.stringify(newContent) !== JSON.stringify(tab.content);
+            return {
+              ...tab,
+              content: newContent,
+              isDirty: tab.isDirty || contentChanged,
+            };
+          }
+          return tab;
+        })
       );
     },
     [activeTabId]
   );
 
   // Block CRUD operations
-  const handleBlockCreate = useCallback(async (blockData: any) => {
+  const handleBlockCreate = useCallback(async (blockData: CreateBlockRequest) => {
     try {
       const response = await fetch("/api/blocks", {
         method: "POST",
@@ -340,7 +356,7 @@ export default function Home() {
     }
   }, []);
 
-  const handleBlockUpdate = useCallback(async (id: number, updates: any) => {
+  const handleBlockUpdate = useCallback(async (id: number, updates: UpdateBlockRequest) => {
     try {
       const response = await fetch(`/api/blocks/${id}`, {
         method: "PUT",
@@ -377,7 +393,7 @@ export default function Home() {
       console.error("Error updating block:", error);
       throw error;
     }
-  }, []);
+  }, [setPromptContent]);
 
   const handleBlockDelete = useCallback(async (id: number) => {
     try {
@@ -406,7 +422,7 @@ export default function Home() {
       console.error("Error deleting block:", error);
       throw error;
     }
-  }, []);
+  }, [setPromptContent]);
 
   // Prompt operations
   const handleSavePrompt = useCallback(
@@ -624,35 +640,6 @@ export default function Home() {
   }, [promptContent]);
 
   // Variable management
-  // Update these to work with tabs
-  const setPromptContent = useCallback(
-    (
-      contentOrUpdater: PromptContent | ((prev: PromptContent) => PromptContent)
-    ) => {
-      if (!activeTabId) return;
-
-      setTabs((prev) =>
-        prev.map((tab) => {
-          if (tab.id === activeTabId) {
-            const newContent =
-              typeof contentOrUpdater === "function"
-                ? contentOrUpdater(tab.content)
-                : contentOrUpdater;
-            // Only mark as dirty if content actually changed
-            const contentChanged =
-              JSON.stringify(newContent) !== JSON.stringify(tab.content);
-            return {
-              ...tab,
-              content: newContent,
-              isDirty: tab.isDirty || contentChanged,
-            };
-          }
-          return tab;
-        })
-      );
-    },
-    [activeTabId]
-  );
 
   const handleVariablesChange = useCallback(
     (newVariables: Record<string, string>) => {
@@ -752,7 +739,7 @@ export default function Home() {
   );
 
   // Handle drag events
-  const handleDragStart = useCallback((event: any) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     if (active.data.current?.type === "library-block") {
       setActiveBlock(active.data.current.block);
@@ -760,7 +747,7 @@ export default function Home() {
   }, []);
 
   const handleDragEnd = useCallback(
-    (event: any) => {
+    (event: DragEndEvent) => {
       const { active, over } = event;
 
       setActiveBlock(null);
@@ -840,7 +827,7 @@ export default function Home() {
         }
       }
     },
-    [promptContent]
+    [promptContent, setPromptContent]
   );
 
   return (

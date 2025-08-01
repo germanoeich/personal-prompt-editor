@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbManager } from '@/lib/knex-db';
 import { extractVariables } from '@/lib/variables';
 
+// Database row type for blocks
+interface BlockDbRow {
+  id: number;
+  title: string;
+  content: string;
+  type: 'preset';
+  tags: string;
+  categories: string;
+  variables: string;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+  current_version: number;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -13,12 +28,15 @@ export async function GET(request: NextRequest) {
     const blocks = await dbManager.getBlocks({ search, type, tags, categories });
     
     // Parse JSON fields for response
-    const parsedBlocks = blocks.map((block: any) => ({
-      ...block,
-      tags: JSON.parse(block.tags || '[]'),
-      categories: JSON.parse(block.categories || '[]'),
-      variables: JSON.parse(block.variables || '[]')
-    }));
+    const parsedBlocks = blocks.map((block) => {
+      const blockRow = block as BlockDbRow;
+      return {
+        ...blockRow,
+        tags: JSON.parse(blockRow.tags || '[]'),
+        categories: JSON.parse(blockRow.categories || '[]'),
+        variables: JSON.parse(blockRow.variables || '[]')
+      };
+    });
 
     return NextResponse.json(parsedBlocks);
   } catch (error) {
@@ -65,11 +83,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Block not found after creation' }, { status: 500 });
     }
     
+    const createdBlockRow = createdBlock as BlockDbRow;
     const parsedBlock = {
-      ...createdBlock,
-      tags: JSON.parse((createdBlock as any).tags || '[]'),
-      categories: JSON.parse((createdBlock as any).categories || '[]'),
-      variables: JSON.parse((createdBlock as any).variables || '[]')
+      ...createdBlockRow,
+      tags: JSON.parse(createdBlockRow.tags || '[]'),
+      categories: JSON.parse(createdBlockRow.categories || '[]'),
+      variables: JSON.parse(createdBlockRow.variables || '[]')
     };
 
     return NextResponse.json(parsedBlock, { status: 201 });

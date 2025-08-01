@@ -1,24 +1,24 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { 
   PlusIcon,
-  ArrowPathIcon,
   CheckIcon,
   XMarkIcon,
   PencilIcon,
 } from '@heroicons/react/24/outline';
 import { 
   PromptContent, 
-  PromptElement, 
   PromptTextElement, 
   PromptBlockElement, 
   Block,
   Prompt,
-  PromptTab
+  PromptTab,
+  CreateBlockRequest,
+  UpdateBlockRequest
 } from '@/types';
-import { extractVariables, replaceVariables } from '@/lib/variables';
+import { replaceVariables } from '@/lib/variables';
 import { generateElementId } from '@/lib/utils';
 import { TextEditorBlock } from './TextEditorBlock';
 import { TextEditorText } from './TextEditorText';
@@ -43,8 +43,8 @@ interface TextEditorCanvasProps {
   isLoading?: boolean;
   currentPrompt?: Prompt | null;
   onTitleChange?: (title: string) => void;
-  onBlockCreate?: (blockData: any) => Promise<void>;
-  onBlockUpdate?: (id: number, updates: any) => Promise<void>;
+  onBlockCreate?: (blockData: CreateBlockRequest) => Promise<void>;
+  onBlockUpdate?: (id: number, updates: UpdateBlockRequest) => Promise<void>;
   onSavePrompt?: (title: string) => Promise<void>;
   availableTags?: string[];
   availableCategories?: string[];
@@ -62,9 +62,6 @@ export function TextEditorCanvas({
   promptContent,
   setPromptContent,
   variables,
-  onVariablesChange,
-  allVariables,
-  blocks,
   isLoading = false,
   currentPrompt,
   onTitleChange,
@@ -83,9 +80,8 @@ export function TextEditorCanvas({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createModalPrefill, setCreateModalPrefill] = useState<any>(null);
+  const [createModalPrefill, setCreateModalPrefill] = useState<{ content: string; title?: string } | null>(null);
   const [convertingElementId, setConvertingElementId] = useState<string | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync title value with active tab
   useEffect(() => {
@@ -183,7 +179,7 @@ export function TextEditorCanvas({
   }, [promptContent, getNextOrder, setPromptContent]);
 
   // Update element
-  const updateElement = useCallback((elementId: string, updates: any) => {
+  const updateElement = useCallback((elementId: string, updates: Partial<PromptTextElement | PromptBlockElement>) => {
     setPromptContent(prev => prev.map(el => 
       el.id === elementId ? { ...el, ...updates } : el
     ));
@@ -216,7 +212,7 @@ export function TextEditorCanvas({
   }, [setPromptContent]);
 
   // Generate preview content
-  const previewContent = useMemo(() => {
+  useMemo(() => {
     const sortedContent = [...promptContent].sort((a, b) => a.order - b.order);
     
     return sortedContent.map(element => {
@@ -243,7 +239,7 @@ export function TextEditorCanvas({
   }, [promptContent, variables]);
 
   // Generate final content for copying
-  const finalContent = useMemo(() => {
+  useMemo(() => {
     const sortedContent = [...promptContent].sort((a, b) => a.order - b.order);
     
     return sortedContent.map(element => {
@@ -294,7 +290,7 @@ export function TextEditorCanvas({
   }, [isSaving, onSavePrompt, tabs, activeTabId]);
 
   // Handle block drop from library
-  const handleBlockDrop = useCallback((block: Block, afterElementId?: string) => {
+  useCallback((block: Block, afterElementId?: string) => {
     addBlockElement(block, afterElementId);
   }, [addBlockElement]);
 
@@ -320,7 +316,7 @@ export function TextEditorCanvas({
     setIsCreateModalOpen(true);
   }, []);
 
-  const handleCreateBlock = useCallback(async (blockData: any) => {
+  const handleCreateBlock = useCallback(async (blockData: CreateBlockRequest) => {
     if (onBlockCreate) {
       try {
         // Create the new block

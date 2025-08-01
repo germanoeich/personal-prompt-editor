@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbManager } from '@/lib/knex-db';
 import { extractVariables } from '@/lib/variables';
 
+// Database row type for blocks
+interface BlockDbRow {
+  id: number;
+  title: string;
+  content: string;
+  type: 'preset';
+  tags: string;
+  categories: string;
+  variables: string;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+  current_version: number;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,11 +34,12 @@ export async function GET(
     }
 
     // Parse JSON fields for response
+    const blockRow = block as BlockDbRow;
     const parsedBlock = {
-      ...block,
-      tags: JSON.parse((block as any).tags || '[]'),
-      categories: JSON.parse((block as any).categories || '[]'),
-      variables: JSON.parse((block as any).variables || '[]')
+      ...blockRow,
+      tags: JSON.parse(blockRow.tags || '[]'),
+      categories: JSON.parse(blockRow.categories || '[]'),
+      variables: JSON.parse(blockRow.variables || '[]')
     };
 
     return NextResponse.json(parsedBlock);
@@ -53,7 +69,13 @@ export async function PUT(
     }
 
     // Extract variables if content is being updated
-    const updateData: any = {};
+    const updateData: {
+      title?: string;
+      content?: string;
+      variables?: string[];
+      tags?: string[];
+      categories?: string[];
+    } = {};
     
     if (data.title !== undefined) updateData.title = data.title;
     if (data.content !== undefined) {
@@ -72,11 +94,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Block not found after update' }, { status: 404 });
     }
     
+    const updatedBlockRow = updatedBlock as BlockDbRow;
     const parsedBlock = {
-      ...updatedBlock,
-      tags: JSON.parse((updatedBlock as any).tags || '[]'),
-      categories: JSON.parse((updatedBlock as any).categories || '[]'),
-      variables: JSON.parse((updatedBlock as any).variables || '[]')
+      ...updatedBlockRow,
+      tags: JSON.parse(updatedBlockRow.tags || '[]'),
+      categories: JSON.parse(updatedBlockRow.categories || '[]'),
+      variables: JSON.parse(updatedBlockRow.variables || '[]')
     };
 
     return NextResponse.json(parsedBlock);

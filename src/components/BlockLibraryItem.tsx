@@ -9,13 +9,13 @@ import {
   TrashIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
-import { Block } from '@/types';
+import { Block, UpdateBlockRequest } from '@/types';
 
 interface BlockLibraryItemProps {
   block: Block;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  onEdit: (updates: any) => void;
+  onEdit: (updates: UpdateBlockRequest) => void;
   onDuplicate: () => void;
   onDelete: () => void;
 }
@@ -37,7 +37,6 @@ export function BlockLibraryItem({
     attributes,
     listeners,
     setNodeRef,
-    transform,
     isDragging,
   } = useDraggable({
     id: `block-${block.id}`,

@@ -47,7 +47,7 @@ export function SidebarVariablesPanel({
 
   // Auto-resize all textareas when variables change
   useEffect(() => {
-    Object.entries(textareaRefs.current).forEach(([variable, textarea]) => {
+    Object.entries(textareaRefs.current).forEach(([, textarea]) => {
       if (textarea) {
         autoResizeTextarea(textarea);
       }

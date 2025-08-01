@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { extractVariables } from '@/lib/variables';
+import { CreateBlockRequest } from '@/types';
 
 interface CreateBlockModalProps {
   onClose: () => void;
-  onCreate: (blockData: any) => void;
+  onCreate: (blockData: CreateBlockRequest) => void;
   availableTags: string[];
   availableCategories: string[];
   prefillData?: {

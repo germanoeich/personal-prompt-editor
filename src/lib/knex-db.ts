@@ -121,7 +121,15 @@ export class DatabaseManager {
       const newVersion = currentBlock.current_version + 1;
 
       // Update block
-      const updateData: any = {};
+      const updateData: {
+        title?: string;
+        content?: string;
+        tags?: string;
+        categories?: string;
+        variables?: string;
+        current_version?: number;
+        updated_at?: ReturnType<typeof trx.fn.now>;
+      } = {};
       if (data.title !== undefined) updateData.title = data.title;
       if (data.content !== undefined) updateData.content = data.content;
       if (data.tags !== undefined) updateData.tags = JSON.stringify(data.tags);
@@ -248,7 +256,16 @@ export class DatabaseManager {
       const newVersion = currentPrompt.current_version + 1;
 
       // Update prompt
-      const updateData: any = {};
+      const updateData: {
+        title?: string;
+        content_snapshot?: string;
+        content_text?: string;
+        tags?: string;
+        categories?: string;
+        variables?: string;
+        current_version?: number;
+        updated_at?: ReturnType<typeof trx.fn.now>;
+      } = {};
       if (data.title !== undefined) updateData.title = data.title;
       if (data.contentSnapshot !== undefined) updateData.content_snapshot = data.contentSnapshot;
       if (data.contentText !== undefined) updateData.content_text = data.contentText;
@@ -387,11 +404,11 @@ export class DatabaseManager {
       .distinct();
     
     const allTags = new Set<string>();
-    [...blockTags, ...promptTags].forEach((row: any) => {
+    [...blockTags, ...promptTags].forEach((row) => {
       try {
         const tags = JSON.parse(row.tags);
         tags.forEach((tag: string) => allTags.add(tag));
-      } catch (e) {
+      } catch {
         // Skip invalid JSON
       }
     });
@@ -411,11 +428,11 @@ export class DatabaseManager {
       .distinct();
     
     const allCategories = new Set<string>();
-    [...blockCategories, ...promptCategories].forEach((row: any) => {
+    [...blockCategories, ...promptCategories].forEach((row) => {
       try {
         const categories = JSON.parse(row.categories);
         categories.forEach((cat: string) => allCategories.add(cat));
-      } catch (e) {
+      } catch {
         // Skip invalid JSON
       }
     });

@@ -1,6 +1,6 @@
 // This module should only be imported on the server
-const knex = require('knex');
-const path = require('path');
+import knex from 'knex';
+import path from 'path';
 
 const dbPath = path.join(process.cwd(), 'data', 'database.sqlite');
 

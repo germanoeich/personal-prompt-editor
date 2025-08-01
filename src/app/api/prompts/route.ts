@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbManager } from '@/lib/knex-db';
-import { replaceVariables } from '@/lib/variables';
 import { parseTextToPromptContent, generateContentSnapshot } from '@/lib/prompt-conversion';
+
+// Database row type for prompts
+interface PromptDbRow {
+  id: number;
+  title: string;
+  content_snapshot: string;
+  content_text: string;
+  tags: string;
+  categories: string;
+  variables: string;
+  created_at: string;
+  updated_at: string;
+  current_version: number;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,13 +26,16 @@ export async function GET(request: NextRequest) {
     const prompts = await dbManager.getPrompts({ search, tags, categories });
     
     // Parse JSON fields for response
-    const parsedPrompts = prompts.map((prompt: any) => ({
-      ...prompt,
-      tags: JSON.parse(prompt.tags || '[]'),
-      categories: JSON.parse(prompt.categories || '[]'),
-      variables: JSON.parse(prompt.variables || '{}'),
-      contentText: prompt.content_text
-    }));
+    const parsedPrompts = prompts.map((prompt) => {
+      const promptRow = prompt as PromptDbRow;
+      return {
+        ...promptRow,
+        tags: JSON.parse(promptRow.tags || '[]'),
+        categories: JSON.parse(promptRow.categories || '[]'),
+        variables: JSON.parse(promptRow.variables || '{}'),
+        contentText: promptRow.content_text
+      };
+    });
 
     return NextResponse.json(parsedPrompts);
   } catch (error) {
@@ -71,12 +87,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Prompt not found after creation' }, { status: 500 });
     }
     
+    const createdPromptRow = createdPrompt as PromptDbRow;
     const parsedPrompt = {
-      ...createdPrompt,
-      tags: JSON.parse((createdPrompt as any).tags || '[]'),
-      categories: JSON.parse((createdPrompt as any).categories || '[]'),
-      variables: JSON.parse((createdPrompt as any).variables || '{}'),
-      contentText: (createdPrompt as any).content_text
+      ...createdPromptRow,
+      tags: JSON.parse(createdPromptRow.tags || '[]'),
+      categories: JSON.parse(createdPromptRow.categories || '[]'),
+      variables: JSON.parse(createdPromptRow.variables || '{}'),
+      contentText: createdPromptRow.content_text
     };
 
     return NextResponse.json(parsedPrompt, { status: 201 });

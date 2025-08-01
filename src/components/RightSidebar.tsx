@@ -7,15 +7,15 @@ import {
   ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
 import { AdvancedBlockLibrary } from "./AdvancedBlockLibrary";
-import { Block } from "@/types";
+import { Block, CreateBlockRequest, UpdateBlockRequest } from "@/types";
 
 interface RightSidebarProps {
   // Block library props
   blocks: Block[];
   isLoadingBlocks: boolean;
   blocksError: string | null;
-  onBlockCreate: (blockData: any) => Promise<void>;
-  onBlockUpdate: (id: number, updates: any) => Promise<void>;
+  onBlockCreate: (blockData: CreateBlockRequest) => Promise<void>;
+  onBlockUpdate: (id: number, updates: UpdateBlockRequest) => Promise<void>;
   onBlockDelete: (id: number) => Promise<void>;
   onRefreshBlocks: () => void;
 

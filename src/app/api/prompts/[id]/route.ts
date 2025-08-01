@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbManager } from '@/lib/knex-db';
 import { parseTextToPromptContent, generateContentSnapshot } from '@/lib/prompt-conversion';
 
+// Database row type for prompts
+interface PromptDbRow {
+  id: number;
+  title: string;
+  content_snapshot: string;
+  content_text: string;
+  tags: string;
+  categories: string;
+  variables: string;
+  created_at: string;
+  updated_at: string;
+  current_version: number;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,12 +29,13 @@ export async function GET(
     }
     
     // Parse JSON fields for response
+    const promptRow = prompt as PromptDbRow;
     const parsedPrompt = {
-      ...prompt,
-      tags: JSON.parse((prompt as any).tags || '[]'),
-      categories: JSON.parse((prompt as any).categories || '[]'),
-      variables: JSON.parse((prompt as any).variables || '{}'),
-      contentText: (prompt as any).content_text
+      ...promptRow,
+      tags: JSON.parse(promptRow.tags || '[]'),
+      categories: JSON.parse(promptRow.categories || '[]'),
+      variables: JSON.parse(promptRow.variables || '{}'),
+      contentText: promptRow.content_text
     };
     
     return NextResponse.json(parsedPrompt, { status: 200 });
@@ -45,7 +60,14 @@ export async function PUT(
       );
     }
 
-    const updateData: any = {};
+    const updateData: {
+      title?: string;
+      tags?: string[];
+      categories?: string[];
+      variables?: Record<string, string>;
+      contentText?: string;
+      contentSnapshot?: string;
+    } = {};
     
     if (data.title) updateData.title = data.title;
     if (data.tags) updateData.tags = Array.isArray(data.tags) ? data.tags : [];
@@ -72,7 +94,7 @@ export async function PUT(
       }
     }
 
-    const result = await dbManager.updatePrompt(parseInt(id), updateData);
+    await dbManager.updatePrompt(parseInt(id), updateData);
     
     // Fetch the updated prompt with parsed JSON fields
     const updatedPrompt = await dbManager.getPrompt(parseInt(id));
@@ -80,12 +102,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Prompt not found after update' }, { status: 500 });
     }
     
+    const updatedPromptRow = updatedPrompt as PromptDbRow;
     const parsedPrompt = {
-      ...updatedPrompt,
-      tags: JSON.parse((updatedPrompt as any).tags || '[]'),
-      categories: JSON.parse((updatedPrompt as any).categories || '[]'),
-      variables: JSON.parse((updatedPrompt as any).variables || '{}'),
-      contentText: (updatedPrompt as any).content_text
+      ...updatedPromptRow,
+      tags: JSON.parse(updatedPromptRow.tags || '[]'),
+      categories: JSON.parse(updatedPromptRow.categories || '[]'),
+      variables: JSON.parse(updatedPromptRow.variables || '{}'),
+      contentText: updatedPromptRow.content_text
     };
 
     return NextResponse.json(parsedPrompt, { status: 200 });

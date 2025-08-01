@@ -1,15 +1,13 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { 
   MagnifyingGlassIcon,
   EllipsisVerticalIcon,
   StarIcon,
   ClockIcon,
   TrashIcon,
-  PencilIcon,
   DocumentDuplicateIcon,
-  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { Prompt } from '@/types';
@@ -23,7 +21,6 @@ interface SidebarPromptsPanelProps {
 
 export function SidebarPromptsPanel({
   prompts,
-  onPromptSelect,
   onPromptDelete,
   onPromptLoad,
 }: SidebarPromptsPanelProps) {
@@ -31,7 +28,6 @@ export function SidebarPromptsPanel({
   const [sortBy, setSortBy] = useState<'recent' | 'usage' | 'name'>('recent');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Use real prompts data
   const displayPrompts = prompts.map(prompt => ({
@@ -65,7 +61,7 @@ export function SidebarPromptsPanel({
       }
     });
 
-  const handlePromptLoad = useCallback(async (prompt: any) => {
+  const handlePromptLoad = useCallback(async (prompt: Prompt) => {
     if (onPromptLoad) {
       setIsLoading(true);
       try {
@@ -76,7 +72,7 @@ export function SidebarPromptsPanel({
     }
   }, [onPromptLoad]);
 
-  const handlePromptClick = useCallback((prompt: any) => {
+  const handlePromptClick = useCallback((prompt: Prompt) => {
     if (onPromptLoad) {
       handlePromptLoad(prompt);
     }

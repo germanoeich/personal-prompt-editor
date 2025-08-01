@@ -2,13 +2,12 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   VariableIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { SidebarVariablesPanel } from "./SidebarVariablesPanel";
 import { SidebarPromptsPanel } from "./SidebarPromptsPanel";
+import { Prompt } from "@/types";
 
 interface SidebarProps {
   // Variables panel props
@@ -17,9 +16,9 @@ interface SidebarProps {
   onVariableChange: (variable: string, value: string) => void;
 
   // Prompts panel props
-  prompts: any[];
-  onPromptSelect?: (prompt: any) => void;
-  onPromptLoad?: (prompt: any) => void;
+  prompts: Prompt[];
+  onPromptSelect?: (prompt: Prompt) => void;
+  onPromptLoad?: (prompt: Prompt) => void;
   onPromptDelete?: (promptId: number) => void;
 
   // Resize state callback (for disabling transitions)
@@ -152,7 +151,6 @@ export function Sidebar({
   // VSCode-style sidebar with vertical icon tabs
 
   const isCollapsed = activeTab === null;
-  const actualWidth = isCollapsed ? 48 : width; // VSCode-style narrow icon bar
 
   return (
     <div className="flex flex-shrink-0">

@@ -5,7 +5,10 @@ import {
   UpdatePromptRequest, 
   CreateBlockRequest, 
   UpdateBlockRequest,
-  ApiResponse 
+  ApiResponse,
+  RatingCategory,
+  Rating,
+  PromptContent
 } from '@/types';
 
 const API_BASE_URL = '/api';
@@ -121,12 +124,12 @@ export const promptAPI = {
 
 // Rating Categories API functions
 export const ratingCategoryAPI = {
-  async getAll(): Promise<ApiResponse<any[]>> {
-    return apiRequest<any[]>(`${API_BASE_URL}/rating-categories`);
+  async getAll(): Promise<ApiResponse<RatingCategory[]>> {
+    return apiRequest<RatingCategory[]>(`${API_BASE_URL}/rating-categories`);
   },
 
-  async create(data: { name: string; description?: string }): Promise<ApiResponse<any>> {
-    return apiRequest<any>(`${API_BASE_URL}/rating-categories`, {
+  async create(data: { name: string; description?: string }): Promise<ApiResponse<RatingCategory>> {
+    return apiRequest<RatingCategory>(`${API_BASE_URL}/rating-categories`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -135,8 +138,8 @@ export const ratingCategoryAPI = {
 
 // Ratings API functions
 export const ratingAPI = {
-  async getAll(promptId: number): Promise<ApiResponse<any[]>> {
-    return apiRequest<any[]>(`${API_BASE_URL}/ratings?promptId=${promptId}`);
+  async getAll(promptId: number): Promise<ApiResponse<Rating[]>> {
+    return apiRequest<Rating[]>(`${API_BASE_URL}/ratings?promptId=${promptId}`);
   },
 
   async create(data: {
@@ -145,8 +148,8 @@ export const ratingAPI = {
     categoryId: number;
     score: number;
     notes?: string;
-  }): Promise<ApiResponse<any>> {
-    return apiRequest<any>(`${API_BASE_URL}/ratings`, {
+  }): Promise<ApiResponse<Rating>> {
+    return apiRequest<Rating>(`${API_BASE_URL}/ratings`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -157,7 +160,7 @@ export const ratingAPI = {
 // Helper functions for common operations
 export const apiHelpers = {
   async savePromptFromContent(
-    promptContent: any[],
+    promptContent: PromptContent,
     variables: Record<string, string>,
     title: string,
     tags: string[] = [],
@@ -180,7 +183,7 @@ export const apiHelpers = {
 
   async updatePromptFromContent(
     promptId: number,
-    promptContent: any[],
+    promptContent: PromptContent,
     variables: Record<string, string>,
     title?: string,
     tags?: string[],
@@ -203,7 +206,7 @@ export const apiHelpers = {
   },
 
   async loadPromptAsContent(promptId: number): Promise<{
-    promptContent: any[];
+    promptContent: PromptContent;
     variables: Record<string, string>;
     prompt: Prompt;
   } | null> {

@@ -73,7 +73,7 @@ export function deepClone<T>(obj: T): T {
   if (obj instanceof Date) return new Date(obj.getTime()) as unknown as T;
   if (obj instanceof Array) return obj.map(item => deepClone(item)) as unknown as T;
   if (typeof obj === 'object') {
-    const cloned: any = {};
+    const cloned: Record<string, unknown> = {};
     for (const key in obj) {
       if (obj.hasOwnProperty(key)) {
         cloned[key] = deepClone(obj[key]);
@@ -87,7 +87,7 @@ export function deepClone<T>(obj: T): T {
 /**
  * Remove undefined values from an object
  */
-export function removeUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+export function removeUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const result: Partial<T> = {};
   for (const key in obj) {
     if (obj[key] !== undefined) {
@@ -100,7 +100,7 @@ export function removeUndefined<T extends Record<string, any>>(obj: T): Partial<
 /**
  * Debounce a function
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -114,7 +114,7 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Throttle a function
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {

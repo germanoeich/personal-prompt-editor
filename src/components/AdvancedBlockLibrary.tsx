@@ -9,7 +9,7 @@ import {
   TagIcon,
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
-import { Block, SearchFilters } from '@/types';
+import { Block, SearchFilters, CreateBlockRequest, UpdateBlockRequest } from '@/types';
 import { BlockLibraryItem } from './BlockLibraryItem';
 import { CreateBlockModal } from './CreateBlockModal';
 
@@ -17,8 +17,8 @@ interface AdvancedBlockLibraryProps {
   blocks: Block[];
   isLoading: boolean;
   error: string | null;
-  onBlockCreate: (blockData: any) => Promise<void>;
-  onBlockUpdate: (id: number, updates: any) => Promise<void>;
+  onBlockCreate: (blockData: CreateBlockRequest) => Promise<void>;
+  onBlockUpdate: (id: number, updates: UpdateBlockRequest) => Promise<void>;
   onBlockDelete: (id: number) => Promise<void>;
   onRefresh: () => void;
   disableResize?: boolean; // New prop to disable resize functionality
@@ -166,7 +166,7 @@ export function AdvancedBlockLibrary({
     });
   }, []);
 
-  const handleBlockEdit = useCallback(async (block: Block, updates: any) => {
+  const handleBlockEdit = useCallback(async (block: Block, updates: UpdateBlockRequest) => {
     try {
       await onBlockUpdate(block.id, updates);
       // TODO: Add success notification
@@ -204,7 +204,7 @@ export function AdvancedBlockLibrary({
     }
   }, [onBlockCreate]);
 
-  const handleCreateBlock = useCallback(async (blockData: any) => {
+  const handleCreateBlock = useCallback(async (blockData: CreateBlockRequest) => {
     try {
       await onBlockCreate(blockData);
       setIsCreateModalOpen(false);
