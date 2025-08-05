@@ -63,12 +63,7 @@ export function SidebarPromptsPanel({
 
   const handlePromptLoad = useCallback(async (prompt: Prompt) => {
     if (onPromptLoad) {
-      setIsLoading(true);
-      try {
-        await onPromptLoad(prompt.prompt);
-      } finally {
-        setIsLoading(false);
-      }
+      await onPromptLoad(prompt);
     }
   }, [onPromptLoad]);
 
@@ -159,7 +154,7 @@ export function SidebarPromptsPanel({
               <div
                 key={prompt.id}
                 className="relative p-3 rounded-lg hover:bg-gray-700 cursor-pointer transition-all duration-200 border border-transparent hover:border-blue-500/50 hover:shadow-lg"
-                onClick={() => handlePromptClick(prompt)}
+                onClick={() => handlePromptClick(prompt.prompt)}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-2">

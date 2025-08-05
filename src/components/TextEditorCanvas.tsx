@@ -43,7 +43,7 @@ interface TextEditorCanvasProps {
   isLoading?: boolean;
   currentPrompt?: Prompt | null;
   onTitleChange?: (title: string) => void;
-  onBlockCreate?: (blockData: CreateBlockRequest) => Promise<void>;
+  onBlockCreate?: (blockData: CreateBlockRequest) => Promise<Block>;
   onBlockUpdate?: (id: number, updates: UpdateBlockRequest) => Promise<void>;
   onSavePrompt?: (title: string) => Promise<void>;
   availableTags?: string[];
@@ -80,7 +80,12 @@ export function TextEditorCanvas({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createModalPrefill, setCreateModalPrefill] = useState<{ content: string; title?: string } | null>(null);
+  const [createModalPrefill, setCreateModalPrefill] = useState<{
+    title?: string;
+    content?: string;
+    tags?: string[];
+    categories?: string[];
+  } | undefined>(undefined);
   const [convertingElementId, setConvertingElementId] = useState<string | null>(null);
 
   // Sync title value with active tab
@@ -180,9 +185,16 @@ export function TextEditorCanvas({
 
   // Update element
   const updateElement = useCallback((elementId: string, updates: Partial<PromptTextElement | PromptBlockElement>) => {
-    setPromptContent(prev => prev.map(el => 
-      el.id === elementId ? { ...el, ...updates } : el
-    ));
+    setPromptContent(prev => prev.map(el => {
+      if (el.id === elementId) {
+        if (el.type === 'text') {
+          return { ...el, ...updates } as PromptTextElement;
+        } else {
+          return { ...el, ...updates } as PromptBlockElement;
+        }
+      }
+      return el;
+    }));
   }, [setPromptContent]);
 
   // Delete element
@@ -299,8 +311,6 @@ export function TextEditorCanvas({
     setCreateModalPrefill({
       title: 'Text Block',
       content,
-      tags: [],
-      categories: [],
     });
     setConvertingElementId(elementId);
     setIsCreateModalOpen(true);
@@ -310,8 +320,6 @@ export function TextEditorCanvas({
     setCreateModalPrefill({
       title,
       content,
-      tags: [],
-      categories: [],
     });
     setIsCreateModalOpen(true);
   }, []);
@@ -322,7 +330,7 @@ export function TextEditorCanvas({
         // Create the new block
         const response = await onBlockCreate(blockData);
         setIsCreateModalOpen(false);
-        setCreateModalPrefill(null);
+        setCreateModalPrefill(undefined);
         
         // If we're converting a text element to a preset, replace it
         if (convertingElementId && response) {
@@ -675,7 +683,7 @@ export function TextEditorCanvas({
         <CreateBlockModal
           onClose={() => {
             setIsCreateModalOpen(false);
-            setCreateModalPrefill(null);
+            setCreateModalPrefill(undefined);
             setConvertingElementId(null);
           }}
           onCreate={handleCreateBlock}

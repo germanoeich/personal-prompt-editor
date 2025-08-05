@@ -55,18 +55,6 @@ export default function Home() {
 
   // Resize state for disabling transitions
 
-  // Handle sidebar resize state changes
-  const handleSidebarResizeStateChange = useCallback((isResizing: boolean) => {
-    setIsSidebarResizing(isResizing);
-  }, []);
-
-  const handleRightSidebarResizeStateChange = useCallback(
-    (isResizing: boolean) => {
-      setIsRightSidebarResizing(isResizing);
-    },
-    []
-  );
-
   // Load blocks from API
   const loadBlocks = useCallback(async () => {
     setIsLoadingBlocks(true);
@@ -867,7 +855,6 @@ export default function Home() {
             }}
             onPromptLoad={handlePromptLoad}
             onPromptDelete={handlePromptDelete}
-            onResizeStateChange={handleSidebarResizeStateChange}
           />
 
           {/* Main Content Area */}
@@ -957,7 +944,6 @@ export default function Home() {
             onBlockDelete={handleBlockDelete}
             onRefreshBlocks={loadBlocks}
             previewContent={previewContent}
-            onResizeStateChange={handleRightSidebarResizeStateChange}
           />
         </div>
       </div>

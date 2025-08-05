@@ -79,7 +79,7 @@ export function deepClone<T>(obj: T): T {
         cloned[key] = deepClone(obj[key]);
       }
     }
-    return cloned;
+    return cloned as T;
   }
   return obj;
 }
