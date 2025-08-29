@@ -33,8 +33,10 @@ COPY --from=builder /app/knexfile.js ./knexfile.js
 COPY --from=builder /app/src/lib/migrations ./src/lib/migrations
 COPY --from=builder /app/src/lib/seeds ./src/lib/seeds
 
-# Create data directory for SQLite database
-RUN mkdir -p data && chown -R nextjs:nodejs data
+# Create data directory for SQLite database with proper permissions
+RUN mkdir -p data && \
+    chmod 755 data && \
+    chown -R nextjs:nodejs data
 
 # Set environment to production
 ENV NODE_ENV=production
@@ -46,5 +48,5 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Run database migrations and start the application
-CMD ["sh", "-c", "npm run db:migrate && npm start"]
+# Run database migrations with retry logic and start the application
+CMD ["sh", "-c", "npm run db:migrate || (sleep 2 && npm run db:migrate) && npm start"]
